@@ -1,0 +1,4472 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>UstozBek — AI Agent</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/highlight.min.js"></script>
+<style>
+/* ===== CSS VARIABLES (THEMES) ===== */
+:root {
+  --bg: #1a1a2e;
+  --bg2: #16213e;
+  --bg3: #0f3460;
+  --surface: #1e1e3a;
+  --surface2: #2a2a4a;
+  --border: #3a3a5a;
+  --text: #e8e8f0;
+  --text2: #a0a0c0;
+  --text3: #6a6a8a;
+  --primary: #7c3aed;
+  --primary2: #6d28d9;
+  --accent: #06b6d4;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --code-bg: #111122;
+  --user-bg: linear-gradient(135deg, #7c3aed, #6d28d9);
+  --assistant-bg: #2a2a4a;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 280px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+}
+[data-theme="light"] {
+  --bg: #f0f2f5;
+  --bg2: #ffffff;
+  --bg3: #e8eaf0;
+  --surface: #ffffff;
+  --surface2: #f4f5f7;
+  --border: #d0d4dc;
+  --text: #1a1a2e;
+  --text2: #4a4a6a;
+  --text3: #8a8aaa;
+  --primary: #7c3aed;
+  --primary2: #6d28d9;
+  --accent: #0891b2;
+  --code-bg: #f4f5f7;
+  --user-bg: linear-gradient(135deg, #7c3aed, #6d28d9);
+  --assistant-bg: #ffffff;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ===== APP LAYOUT ===== */
+#app {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+}
+
+/* ===== SIDEBAR ===== */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, margin 0.3s ease;
+  z-index: 20;
+  overflow: hidden;
+}
+#sidebar.hidden {
+  margin-left: calc(var(--sidebar-w) * -1);
+}
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-header h1 {
+  font-size: 16px;
+  font-weight: 700;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-header .logo {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.sidebar-actions {
+  padding: 12px 16px;
+  display: flex;
+  gap: 8px;
+}
+.sidebar-actions button {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.sidebar-actions button:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.sidebar-search {
+  padding: 0 16px 8px;
+}
+.sidebar-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border 0.2s;
+}
+.sidebar-search input:focus {
+  border-color: var(--primary);
+}
+.conversation-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 8px;
+}
+.conv-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+.conv-item:hover { background: var(--surface2); }
+.conv-item.active { background: var(--surface2); border-left: 3px solid var(--primary); }
+.conv-item .conv-title {
+  flex: 1;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.conv-item .conv-pin {
+  font-size: 11px;
+  opacity: 0.5;
+}
+.conv-item .conv-del {
+  opacity: 0;
+  font-size: 14px;
+  padding: 2px 4px;
+  border: none;
+  background: none;
+  color: var(--text3);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.conv-item:hover .conv-del { opacity: 0.6; }
+.conv-item .conv-del:hover { opacity: 1; color: var(--danger); background: rgba(239,68,68,0.1); }
+
+/* ===== MAIN CHAT AREA ===== */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg2);
+}
+#chat-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+#chat-header .conv-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#chat-header .model-badge {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.btn-icon {
+  width: 34px; height: 34px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.btn-icon:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ===== MESSAGES ===== */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+.message {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  gap: 12px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.message.user {
+  flex-direction: row-reverse;
+}
+.message .avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+.message.user .avatar {
+  background: var(--primary);
+  color: #fff;
+}
+.message.assistant .avatar {
+  background: linear-gradient(135deg, var(--accent), #3b82f6);
+  color: #fff;
+}
+.message .bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  line-height: 1.6;
+  font-size: 14px;
+  position: relative;
+  word-break: break-word;
+}
+.message.user .bubble {
+  background: var(--user-bg);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.message.assistant .bubble {
+  background: var(--assistant-bg);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.message .bubble pre {
+  background: var(--code-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+  position: relative;
+}
+.message .bubble pre code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  background: none !important;
+  padding: 0 !important;
+}
+.message .bubble code {
+  background: rgba(var(--primary), 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.message .bubble pre .copy-btn {
+  position: absolute;
+  top: 6px; right: 6px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.1);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.message .bubble pre:hover .copy-btn { opacity: 1; }
+.message .bubble pre .copy-btn:hover { background: rgba(255,255,255,0.2); color: var(--text); }
+.message .bubble p { margin: 4px 0; }
+.message .bubble ul, .message .bubble ol { margin: 4px 0; padding-left: 20px; }
+.message .bubble h1, .message .bubble h2, .message .bubble h3 { margin: 12px 0 6px; }
+.message .bubble blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--text2);
+}
+/* ===== JADVALLAR (TABLES) ===== */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin: 10px 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 400px;
+}
+.table-wrapper thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.table-wrapper th {
+  background: var(--surface2);
+  font-weight: 700;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 2px solid var(--primary);
+  color: var(--text);
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  position: relative;
+}
+.table-wrapper th:hover {
+  background: var(--bg3);
+}
+.table-wrapper th .sort-icon {
+  display: inline-block;
+  margin-left: 6px;
+  opacity: 0.3;
+  font-size: 10px;
+}
+.table-wrapper th:hover .sort-icon {
+  opacity: 0.7;
+}
+.table-wrapper th.sorted-asc .sort-icon,
+.table-wrapper th.sorted-desc .sort-icon {
+  opacity: 1;
+  color: var(--primary);
+}
+.table-wrapper td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.table-wrapper tbody tr {
+  transition: background 0.15s;
+}
+.table-wrapper tbody tr:nth-child(even) {
+  background: rgba(124, 58, 237, 0.03);
+}
+.table-wrapper tbody tr:hover {
+  background: rgba(124, 58, 237, 0.1);
+}
+.table-wrapper tbody tr:last-child td {
+  border-bottom: none;
+}
+.table-wrapper caption {
+  padding: 8px 14px;
+  font-weight: 600;
+  text-align: left;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  caption-side: top;
+  font-size: 13px;
+  color: var(--text2);
+}
+/* compact table variant */
+.table-wrapper.compact td,
+.table-wrapper.compact th {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+/* striped variant (qo'shimcha) */
+.table-wrapper.striped tbody tr:nth-child(even) {
+  background: rgba(124, 58, 237, 0.06);
+}
+/* table info bar */
+.table-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+}
+.table-info .table-rows {
+  font-weight: 600;
+}
+.table-info .table-copy-btn {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s;
+}
+.table-info .table-copy-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+[data-theme="light"] .table-wrapper tbody tr:nth-child(even) {
+  background: rgba(124, 58, 237, 0.04);
+}
+[data-theme="light"] .table-wrapper tbody tr:hover {
+  background: rgba(124, 58, 237, 0.08);
+}
+.message .bubble img { max-width: 100%; border-radius: var(--radius-sm); margin: 8px 0; }
+.message .bubble a { color: var(--accent); text-decoration: none; }
+.message .bubble a:hover { text-decoration: underline; }
+
+/* ===== CHART.JS CONTAINER ===== */
+.chart-container {
+  padding: 16px; background: var(--surface2);
+  border-top: 1px solid var(--border);
+}
+.chart-container canvas { max-height: 300px; }
+
+/* ===== CODE BLOCK ENHANCEMENTS ===== */
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 12px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  margin-top: 8px;
+}
+.code-header + pre {
+  margin-top: 0 !important;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+.code-lines { counter-reset: line; }
+.code-lines .cl {
+  display: block;
+  counter-increment: line;
+  padding-left: 0;
+}
+.code-lines .cl::before {
+  content: counter(line);
+  display: inline-block;
+  width: 32px;
+  padding-right: 12px;
+  text-align: right;
+  color: var(--text3);
+  opacity: 0.5;
+  font-size: 11px;
+  user-select: none;
+}
+.code-collapsed .code-overflow {
+  display: none;
+}
+.code-collapsed .code-toggle {
+  display: flex;
+}
+.code-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  cursor: pointer;
+  background: rgba(0,0,0,0.2);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  font-size: 11px;
+  color: var(--accent);
+  user-select: none;
+  margin-bottom: 8px;
+}
+.code-toggle:hover { background: rgba(0,0,0,0.3); }
+
+/* ===== CALLOUT/ALERT BLOCKLARI ===== */
+.callout {
+  margin: 10px 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid;
+  background: var(--surface2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.callout-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.callout-content { color: var(--text2); }
+.callout-content p { margin: 4px 0; }
+.callout-note { border-left-color: #3b82f6; }
+.callout-note .callout-title { color: #60a5fa; }
+.callout-tip { border-left-color: #10b981; }
+.callout-tip .callout-title { color: #34d399; }
+.callout-important { border-left-color: #8b5cf6; }
+.callout-important .callout-title { color: #a78bfa; }
+.callout-warning { border-left-color: #f59e0b; }
+.callout-warning .callout-title { color: #fbbf24; }
+.callout-caution { border-left-color: #ef4444; }
+.callout-caution .callout-title { color: #f87171; }
+
+.thinking-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--text2);
+}
+.thinking-block summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.thinking-block[open] summary { margin-bottom: 8px; }
+.thinking-content {
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text3);
+}
+
+/* ===== TASK LIST + PROGRESS BAR ===== */
+.task-list-wrapper {
+  margin: 10px 0;
+}
+.task-list-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.task-list-progress .progress-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.task-list-progress .progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--primary));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.task-list-progress .task-count {
+  white-space: nowrap;
+  font-weight: 600;
+  min-width: 70px;
+  text-align: right;
+}
+.task-list-wrapper ul, .task-list-wrapper ol {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+.task-list-wrapper li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: 2px 0;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+.task-list-wrapper li:hover {
+  background: var(--surface2);
+}
+.task-list-wrapper li input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--text3);
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 1px;
+  position: relative;
+  transition: all 0.2s;
+}
+.task-list-wrapper li input[type="checkbox"]:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.task-list-wrapper li input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+.task-list-wrapper li input[type="checkbox"]:hover {
+  border-color: var(--accent);
+}
+.task-list-wrapper li.done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* ===== KATEX MATEMATIKA ===== */
+.katex-block {
+  margin: 10px 0;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  text-align: center;
+  font-size: 14px;
+}
+.katex-inline {
+  display: inline-block;
+  padding: 0 2px;
+}
+.math-loading {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text3);
+  animation: pulse 1.5s infinite;
+}
+
+/* ===== JSON TREE VIEWER ===== */
+.json-tree {
+  margin: 10px 0;
+  background: var(--code-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+.json-tree .jnode { padding-left: 18px; position: relative; }
+.json-tree .jkey { color: #93c5fd; }
+.json-tree .jstring { color: #86efac; }
+.json-tree .jnumber { color: #fde68a; }
+.json-tree .jbool { color: #c4b5fd; }
+.json-tree .jnull { color: var(--text3); font-style: italic; }
+.json-tree .jtoggle {
+  position: absolute; left: 0; top: 2px;
+  cursor: pointer; user-select: none;
+  width: 14px; text-align: center;
+  color: var(--text3); font-size: 10px;
+  transition: transform 0.15s;
+}
+.json-tree .jtoggle.open { transform: rotate(90deg); }
+.json-tree .jcollapsed { display: none; }
+.json-tree .jbracket { color: var(--text3); }
+.json-tree .jcomma { color: var(--text3); }
+.json-tree .jellipsis { color: var(--text3); font-style: italic; }
+.json-tree .jprop { display: flex; gap: 4px; }
+.json-tree .jprop > .jvalue { flex: 1; }
+
+/* ===== FILE PREVIEW CARD ===== */
+.file-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; margin: 6px 0;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: default;
+  max-width: 300px; transition: border-color 0.2s;
+}
+.file-card:hover { border-color: var(--accent); }
+.file-card .file-icon { font-size: 24px; flex-shrink: 0; }
+.file-card .file-info { flex: 1; min-width: 0; }
+.file-card .file-name { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-card .file-size { font-size: 11px; color: var(--text3); }
+.file-card .file-action {
+  font-size: 11px; padding: 4px 8px; border: none;
+  border-radius: 4px; background: var(--accent); color: #fff;
+  cursor: pointer; flex-shrink: 0;
+}
+.file-card .file-action:hover { opacity: 0.8; }
+
+/* ===== MESSAGE TIMESTAMP ===== */
+.message .msg-time {
+  font-size: 10px; color: var(--text3); margin-top: 4px;
+  opacity: 0.6; user-select: none;
+}
+.message.assistant .msg-time { text-align: left; }
+.message.user .msg-time { text-align: right; }
+
+/* ===== TIMELINE ===== */
+.timeline {
+  margin: 10px 0; padding-left: 24px;
+  border-left: 2px solid var(--primary);
+  list-style: none !important;
+}
+.timeline li {
+  position: relative; padding: 8px 0 8px 16px;
+  margin: 0 !important;
+}
+.timeline li::before {
+  content: ""; position: absolute;
+  left: -27px; top: 14px; width: 10px; height: 10px;
+  background: var(--primary); border-radius: 50%;
+  border: 2px solid var(--surface);
+}
+.timeline li:first-child::before { top: 12px; }
+.timeline li .tl-date {
+  font-weight: 700; font-size: 12px; color: var(--accent);
+  display: block; margin-bottom: 2px;
+}
+
+/* ===== COPY ANIMATION + MESSAGE GLOW ===== */
+@keyframes msg-glow {
+  0% { box-shadow: 0 0 0 0 rgba(var(--primary), 0.3); }
+  70% { box-shadow: 0 0 0 8px rgba(var(--primary), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--primary), 0); }
+}
+.message.glow { animation: msg-glow 0.8s ease-out; }
+@keyframes copy-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.copy-btn.copied {
+  animation: copy-pop 0.3s ease;
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+/* ===== LIGHTBOX IMAGE GALLERY ===== */
+.img-gallery {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0;
+}
+.img-gallery img {
+  max-height: 200px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: transform 0.2s, opacity 0.2s;
+  object-fit: cover;
+}
+.img-gallery img:hover { transform: scale(1.03); opacity: 0.9; }
+.lightbox-overlay {
+  display: none; position: fixed; z-index: 9999;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); cursor: pointer;
+  align-items: center; justify-content: center;
+}
+.lightbox-overlay.open { display: flex; }
+.lightbox-overlay img {
+  max-width: 90vw; max-height: 90vh; border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.lightbox-overlay .lightbox-close {
+  position: absolute; top: 16px; right: 20px;
+  color: #fff; font-size: 28px; cursor: pointer;
+  width: 40px; height: 40px; display: flex;
+  align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.1); border-radius: 50%;
+}
+
+/* ===== MERMAID DIAGRAM ===== */
+.mermaid {
+  margin: 10px 0;
+  padding: 16px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  text-align: center;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* ===== INPUT AREA ===== */
+#input-area {
+  padding: 16px 20px 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.input-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  transition: border-color 0.2s;
+}
+.input-wrapper:focus-within {
+  border-color: var(--primary);
+}
+.input-wrapper textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  min-height: 24px;
+  max-height: 200px;
+  padding: 4px 8px;
+}
+.input-wrapper textarea::placeholder { color: var(--text3); }
+.input-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.input-actions button {
+  width: 34px; height: 34px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 16px;
+}
+.input-actions button:hover { background: var(--surface2); color: var(--text); }
+.input-actions .btn-send {
+  background: var(--primary);
+  color: #fff;
+  width: 38px; height: 38px;
+}
+.input-actions .btn-send:hover { background: var(--primary2); }
+.input-actions .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+.input-actions .btn-stop {
+  background: var(--danger);
+  color: #fff;
+  width: 38px; height: 38px;
+}
+.input-actions .btn-stop:hover { background: #dc2626; }
+/* ===== STT (Speech-to-Text) ===== */
+.btn-mic {
+  position: relative;
+}
+.btn-mic.recording {
+  color: var(--danger);
+  background: rgba(239,68,68,0.1);
+  animation: micPulse 1.2s ease-in-out infinite;
+}
+.btn-mic.recording:hover {
+  background: rgba(239,68,68,0.2);
+}
+.btn-mic.unsupported {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+}
+/* Recording indicator (chat header da) */
+#rec-indicator {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(239,68,68,0.1);
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  animation: fadeIn 0.2s ease;
+  white-space: nowrap;
+}
+#rec-indicator.active {
+  display: flex;
+}
+#rec-indicator .rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: recBlink 0.8s ease-in-out infinite;
+}
+@keyframes recBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===== TYPING DOTS ANIMATION ===== */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 0;
+}
+.typing-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text3);
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+.typing-dots .dot:nth-child(1) { animation-delay: 0s; }
+.typing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+#rec-indicator .rec-level {
+  width: 60px;
+  height: 4px;
+  background: rgba(239,68,68,0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+#rec-indicator .rec-level .rec-bar {
+  height: 100%;
+  background: var(--danger);
+  border-radius: 2px;
+  transition: width 0.1s;
+  width: 30%;
+}
+/* STT model taklif dialog */
+.stt-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 150;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.stt-dialog-overlay.open { display: flex; }
+.stt-dialog {
+  width: 400px;
+  max-width: 90vw;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  animation: slideUp 0.25s ease;
+}
+.stt-dialog h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stt-dialog p {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.stt-dialog .dialog-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.stt-dialog .dialog-actions button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.stt-dialog .btn-cancel {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.stt-dialog .btn-cancel:hover { background: var(--border); }
+.stt-dialog .btn-switch {
+  background: var(--primary);
+  color: #fff;
+}
+.stt-dialog .btn-switch:hover { background: var(--primary2); }
+.stt-dialog .btn-continue {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.stt-dialog .btn-continue:hover { background: var(--border); }
+.stt-dialog select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13px;
+  margin-bottom: 16px;
+  font-family: var(--font);
+}
+.stt-dialog select:focus { border-color: var(--primary); outline: none; }
+
+/* ===== SETTINGS MODAL ===== */
+#settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#settings-overlay.open { display: flex; }
+#settings-modal {
+  width: 520px;
+  max-width: 95vw;
+  max-height: 90vh;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.settings-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.settings-header h2 { font-size: 18px; font-weight: 700; }
+.settings-header button {
+  width: 32px; height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.settings-header button:hover { background: var(--danger); color: #fff; }
+.settings-body { padding: 20px 24px; }
+.settings-section { margin-bottom: 24px; }
+.settings-section:last-child { margin-bottom: 0; }
+.settings-section h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: var(--text2);
+}
+.form-group .hint {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 3px;
+}
+.form-group select,
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border 0.2s;
+  font-family: var(--font);
+}
+.form-group select:focus,
+.form-group input:focus {
+  border-color: var(--primary);
+}
+.form-group textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  resize: vertical;
+  font-family: var(--font);
+  line-height: 1.5;
+  transition: border 0.2s;
+}
+.form-group textarea:focus { border-color: var(--primary); }
+.form-group .input-with-btn {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.form-group .input-with-btn input { flex: 1; }
+.form-group .input-with-btn button {
+  padding: 9px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.form-group .input-with-btn button:hover { background: var(--primary2); }
+.form-group .input-with-btn button:disabled { opacity: 0.5; cursor: not-allowed; }
+.api-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+  font-weight: 500;
+}
+.api-status.connected { background: rgba(16,185,129,0.1); color: var(--success); }
+.api-status.error { background: rgba(239,68,68,0.1); color: var(--danger); }
+.api-status.loading { background: rgba(245,158,11,0.1); color: var(--warning); }
+.api-status .spinner {
+  width: 14px; height: 14px;
+  border: 2px solid var(--warning);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.form-group .slider-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.form-group .slider-group input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary);
+  height: 4px;
+}
+.form-group .slider-group .value {
+  min-width: 40px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+.form-group .api-link {
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 4px;
+  display: inline-block;
+}
+.form-group .api-link:hover { text-decoration: underline; }
+.btn-save-settings {
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-save-settings:hover { background: var(--primary2); }
+
+/* ===== EMPTY STATE ===== */
+#empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text2);
+}
+#empty-state .icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+#empty-state h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+#empty-state p {
+  font-size: 14px;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* ===== LOCAL MODEL DOWNLOAD ===== */
+.model-progress {
+  margin: 8px 0;
+}
+.model-progress .progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.model-progress .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.model-progress .progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text3);
+}
+#local-model-status {
+  margin-top: 8px;
+  font-size: 13px;
+}
+#local-model-status .status-loaded {
+  color: var(--success);
+  font-weight: 500;
+}
+#local-model-status .status-error {
+  color: var(--danger);
+}
+#local-model-status .status-loading {
+  color: var(--warning);
+}
+#local-model-status .status-waiting {
+  color: var(--text3);
+}
+#download-model-btn {
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+#download-model-btn:hover { background: var(--primary2); }
+#download-model-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--surface2);
+  color: var(--text3);
+}
+#webgpu-warning {
+  display: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(245,158,11,0.1);
+  color: var(--warning);
+  font-size: 12px;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+#webgpu-warning.show { display: block; }
+
+/* ===== TOAST ===== */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  animation: slideIn 0.3s ease;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--accent); }
+@keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ===== RESPONSIVE — UNIVERSAL ===== */
+/* Asosiy: mobile-first */
+:root {
+  --sidebar-w: 280px;
+  --touch-min: 44px;
+}
+
+/* === KICHIK TELEFONLAR (<480px) === */
+@media (max-width: 479px) {
+  #sidebar { width: 85vw; min-width: 85vw; }
+  #sidebar.hidden { transform: translateX(-100%); margin-left: 0; }
+  .sidebar-header { padding: 10px 12px; }
+  .sidebar-header h1 { font-size: 14px; }
+  .sidebar-actions { padding: 8px 12px; gap: 6px; }
+  .sidebar-actions button { padding: 10px 8px; font-size: 12px; }
+  .sidebar-search { padding: 0 12px 6px; }
+  .sidebar-search input { padding: 10px 10px; font-size: 14px; }
+  .conv-item { padding: 12px 10px; }
+
+  #chat-header { padding: 8px 10px; gap: 6px; }
+  #chat-header .conv-title { font-size: 13px; }
+  .model-badge { font-size: 10px; padding: 2px 8px; }
+  .btn-icon { width: 36px; height: 36px; font-size: 15px; }
+
+  #messages { padding: 10px; gap: 10px; }
+  .message { gap: 8px; }
+  .message .avatar { width: 28px; height: 28px; font-size: 12px; min-width: 28px; }
+  .message .bubble { padding: 10px 12px; font-size: 14px; max-width: 100%; }
+  .message .bubble pre { padding: 8px; }
+  .message .bubble pre code { font-size: 12px; }
+  .message .bubble th, .message .bubble td { padding: 5px 8px; font-size: 12px; }
+
+  #input-area { padding: 8px 10px 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .input-wrapper { padding: 4px 6px; border-radius: 10px; }
+  .input-wrapper textarea { font-size: 15px; padding: 4px 6px; }
+  .input-actions button { width: 38px; height: 38px; font-size: 17px; }
+  .input-actions .btn-send,
+  .input-actions .btn-stop { width: 40px; height: 40px; }
+
+  #settings-modal { width: 100%; max-width: 100%; max-height: 100vh; max-height: 100dvh; border-radius: 0; }
+  .settings-header { padding: 14px 16px; }
+  .settings-body { padding: 14px 16px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .settings-section { margin-bottom: 16px; }
+  .form-group { margin-bottom: 10px; }
+  .form-group label { font-size: 13px; }
+  .form-group select,
+  .form-group input,
+  .form-group textarea { font-size: 15px; padding: 10px 10px; }
+  .form-group textarea { min-height: 60px; }
+  .form-group .input-with-btn button { padding: 10px 12px; font-size: 13px; }
+
+  #empty-state h2 { font-size: 18px; }
+  #empty-state p { font-size: 13px; }
+  #empty-state .icon { font-size: 36px; }
+
+  .stt-dialog { width: 95vw; padding: 16px; }
+  .stt-dialog .dialog-actions { flex-wrap: wrap; }
+  .stt-dialog .dialog-actions button { flex: 1; min-width: 80px; font-size: 12px; padding: 10px 12px; }
+
+  #rec-indicator { font-size: 11px; padding: 3px 8px; }
+  #rec-indicator .rec-level { width: 36px; }
+
+  .toast { font-size: 12px; padding: 10px 14px; max-width: 300px; }
+  #toast-container { bottom: 12px; right: 12px; left: 12px; }
+  .toast { max-width: 100%; }
+
+  .table-wrapper { font-size: 12px; }
+  .table-wrapper th,
+  .table-wrapper td { padding: 6px 8px; font-size: 12px; }
+  .table-info { font-size: 10px; padding: 4px 8px; flex-wrap: wrap; gap: 4px; }
+}
+
+/* === KATTA TELEFONLAR (480-767px) === */
+@media (min-width: 480px) and (max-width: 767px) {
+  #sidebar { width: 75vw; min-width: 75vw; }
+  #sidebar.hidden { transform: translateX(-100%); margin-left: 0; }
+  .sidebar-header { padding: 12px 16px; }
+  .sidebar-actions { padding: 10px 16px; }
+  .sidebar-actions button { padding: 10px 12px; }
+  .sidebar-search input { font-size: 14px; padding: 10px 12px; }
+  .conv-item { padding: 12px; }
+
+  #chat-header { padding: 10px 16px; }
+  .btn-icon { width: 38px; height: 38px; }
+
+  #messages { padding: 12px 16px; }
+  .message .bubble { max-width: 92%; font-size: 14px; }
+  .message .avatar { width: 30px; height: 30px; font-size: 13px; min-width: 30px; }
+
+  #input-area { padding: 10px 16px 14px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .input-wrapper textarea { font-size: 15px; }
+
+  #settings-modal { width: 100%; max-width: 100%; max-height: 100vh; border-radius: 0; }
+  .settings-body { padding: 16px 20px; }
+  .form-group select,
+  .form-group input,
+  .form-group textarea { font-size: 15px; }
+
+  .stt-dialog .dialog-actions { flex-wrap: wrap; }
+  .stt-dialog .dialog-actions button { flex: 1; min-width: 80px; }
+}
+
+/* === PLANSHE/TABLET (768-1023px) === */
+@media (max-width: 1023px) {
+  #sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    transform: translateX(0);
+    z-index: 30;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease;
+  }
+  #sidebar.hidden {
+    transform: translateX(-100%);
+    margin-left: 0;
+  }
+  .sidebar-header .btn-icon:last-child { display: flex; }
+
+  #sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 25;
+    display: none;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  #sidebar.hidden ~ #sidebar-backdrop { display: none; }
+  #sidebar:not(.hidden) ~ #sidebar-backdrop { display: block; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  #sidebar { width: 300px; min-width: 300px; }
+  #chat-header { padding: 10px 18px; }
+  #messages { padding: 16px 24px; }
+  .message .bubble { max-width: 88%; }
+  .settings-body { padding: 20px 24px; }
+}
+
+/* === DESKTOP (≥1024px) === */
+@media (min-width: 1024px) {
+  #sidebar.hidden { margin-left: calc(var(--sidebar-w) * -1); }
+  #sidebar-backdrop { display: none !important; }
+  #sidebar .sidebar-header .btn-icon:last-child { display: none; }
+
+  .message .bubble { max-width: 80%; }
+  #messages { padding: 24px 32px; }
+  #chat-header { padding: 12px 24px; }
+}
+
+/* === KENG DESKTOP (≥1440px) === */
+@media (min-width: 1440px) {
+  #messages { padding: 32px 40px; }
+  .message .bubble { max-width: 75%; }
+  .input-wrapper { max-width: 900px; margin: 0 auto; }
+  #chat-header { padding: 14px 32px; }
+}
+
+/* === ORIENTATION LANDSCAPE (telefon gorizontal) === */
+@media (max-height: 480px) and (orientation: landscape) {
+  #sidebar { width: 60vw; min-width: 60vw; }
+  #chat-header { padding: 6px 12px; }
+  .btn-icon { width: 32px; height: 32px; font-size: 14px; }
+  #messages { padding: 8px 12px; }
+  .message { gap: 6px; }
+  .message .avatar { width: 24px; height: 24px; font-size: 11px; min-width: 24px; }
+  .message .bubble { padding: 8px 10px; font-size: 13px; }
+  #input-area { padding: 6px 12px 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .input-wrapper textarea { min-height: 20px; max-height: 80px; font-size: 14px; }
+  .input-actions button { width: 32px; height: 32px; font-size: 14px; }
+  .input-actions .btn-send,
+  .input-actions .btn-stop { width: 34px; height: 34px; }
+  .settings-header { padding: 8px 16px; }
+  .settings-body { padding: 10px 16px; max-height: 60vh; overflow-y: auto; }
+}
+
+/* === UMUMIY MOBILE (touch qurilmalar) === */
+@media (hover: none) and (pointer: coarse) {
+  .btn-icon, .input-actions button,
+  .sidebar-actions button,
+  .conv-item,
+  .dialog-actions button,
+  .btn-save-settings {
+    cursor: default;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .conv-item .conv-del { opacity: 0.4; }
+  .message .bubble pre .copy-btn { opacity: 0.6; }
+  .table-wrapper th .sort-icon { opacity: 0.5; }
+  ::-webkit-scrollbar { width: 3px; }
+}
+
+/* === PRINT === */
+@media print {
+  #sidebar, #input-area, #settings-overlay,
+  .btn-icon, .model-badge, .input-actions { display: none !important; }
+  #main { height: auto !important; overflow: visible !important; }
+  .message .bubble { border: 1px solid #ccc; break-inside: avoid; }
+  body { background: #fff; color: #000; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="hidden">
+    <div class="sidebar-header">
+      <div class="logo">✦</div>
+      <h1>UstozBek</h1>
+      <button class="btn-icon" onclick="toggleSidebar()" title="Yopish">✕</button>
+    </div>
+    <div class="sidebar-actions">
+      <button onclick="newConversation()">✦ Yangi</button>
+      <button onclick="openSettings()">⚙️ Sozlamalar</button>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" id="search-input" placeholder="Qidirish..." oninput="renderConversationList()">
+    </div>
+    <div class="conversation-list" id="conv-list"></div>
+  </aside>
+  <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+  <!-- Main -->
+  <main id="main">
+    <div id="chat-header">
+      <button class="btn-icon" onclick="toggleSidebar()" title="Menyu">☰</button>
+      <span class="conv-title" id="conv-title">Yangi chat</span>
+      <div id="rec-indicator">
+        <span class="rec-dot"></span>
+        <span>Yozishmoqda...</span>
+        <div class="rec-level"><div class="rec-bar" id="rec-bar"></div></div>
+      </div>
+      <span class="model-badge" id="model-badge">—</span>
+      <button class="btn-icon" onclick="togglePin()" id="pin-btn" title="Pin">📌</button>
+      <button class="btn-icon" onclick="openSettings()" title="Sozlamalar">⚙️</button>
+      <button class="btn-icon" onclick="toggleTheme()" id="theme-btn" title="Tema">🌙</button>
+    </div>
+
+    <div id="messages"></div>
+
+    <div id="empty-state">
+      <div class="icon">✦</div>
+      <h2>UstozBek</h2>
+      <p>Ta'lim agenti</p>
+    </div>
+
+    <div id="input-area">
+      <div class="input-wrapper">
+        <textarea id="chat-input" rows="1" placeholder="Xabar yozish..." oninput="autoResize(this)" onkeydown="handleKeyDown(event)"></textarea>
+        <div class="input-actions">
+          <button onclick="document.getElementById('file-input').click()" title="Fayl yuklash">📎</button>
+          <button class="btn-mic" id="mic-btn" onclick="startSpeechToText()" title="Ovozli kiritish (STT)">🎤</button>
+          <button class="btn-send" id="send-btn" onclick="sendMessage()" title="Yuborish">➤</button>
+          <button class="btn-stop" id="stop-btn" onclick="stopGeneration()" title="To'xtatish" style="display:none">■</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- File input (hidden) -->
+<input type="file" id="file-input" accept="image/*,.pdf,.txt,.py,.js,.ts,.html,.css,.json,.md,.csv" multiple style="display:none" onchange="handleFiles(this.files)">
+
+<!-- STT Model Selection Dialog -->
+<div class="stt-dialog-overlay" id="stt-dialog">
+  <div class="stt-dialog">
+    <h3>🎤 Ovozli kiritish (STT)</h3>
+    <p id="stt-dialog-msg">
+      Ovozli kiritish uchun <strong>audio</strong> kirishni qo'llab-quvvatlaydigan model kerak.
+      Quyidagi modellardan birini tanlang yoki joriy model bilan davom eting.
+    </p>
+    <select id="stt-model-select"></select>
+    <div class="dialog-actions">
+      <button class="btn-cancel" onclick="closeSttDialog()">Bekor qilish</button>
+      <button class="btn-continue" onclick="startSttWithCurrent()">Joriy model bilan davom etish</button>
+      <button class="btn-switch" onclick="startSttWithSelected()">Tanlangan modelga o'tish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-overlay">
+  <div id="settings-modal">
+    <div class="settings-header">
+      <h2>⚙️ Sozlamalar</h2>
+      <button onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-body">
+
+      <!-- Provider -->
+      <div class="settings-section">
+        <h3>Provayder</h3>
+        <div class="form-group">
+          <label>AI provayder</label>
+          <select id="settings-provider" onchange="onProviderChange()">
+            <option value="google">Google AI</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Model & API Key -->
+      <div class="settings-section">
+        <h3>Model va API kalit</h3>
+        <div class="form-group">
+          <label>Model</label>
+          <select id="settings-model">
+            <option value="">— Avval API kalitni tekshiring —</option>
+          </select>
+          <div class="hint">
+            <a href="#" onclick="refreshModels()" style="color:var(--accent);cursor:pointer">🔄 Modellarni yangilash</a>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>API kalit</label>
+          <div class="input-with-btn">
+            <input type="password" id="settings-apikey" placeholder="AIza..." oninput="clearApiStatus()">
+            <button onclick="checkApiKey()" id="check-api-btn">🔍 Tekshirish</button>
+          </div>
+          <a class="api-link" href="https://aistudio.google.com/apikey" target="_blank">🔗 aistudio.google.com/apikey</a>
+          <div id="api-status"></div>
+        </div>
+      </div>
+
+      <!-- System Prompt -->
+      <div class="settings-section">
+        <h3>Tizim yo'riqnomasi (System Prompt)</h3>
+        <div class="form-group">
+          <label>System prompt</label>
+          <textarea id="settings-system-prompt" placeholder="System prompt ni kiriting (bo'sh qoldirilsa, yuborilmaydi)"></textarea>
+          <div class="hint">Har bir chatda shu yo'riqnomadan foydalaniladi. Conversation override qilishi mumkin.</div>
+        </div>
+      </div>
+
+      <!-- Default User Prompt -->
+      <div class="settings-section">
+        <h3>Foydalanuvchi xabari sozlamalari</h3>
+        <div class="form-group">
+          <label>Default placeholder matni</label>
+          <input type="text" id="settings-user-prompt" placeholder="Nima bilan yordam bera olaman?">
+          <div class="hint">Yangi chat ochilganda input maydonida ko'rinadigan matn.</div>
+        </div>
+      </div>
+
+      <!-- Generation Params -->
+      <div class="settings-section">
+        <h3>Generatsiya parametrlari</h3>
+        <div class="form-group">
+          <label>Temperature</label>
+          <div class="slider-group">
+            <input type="range" id="settings-temp" min="0" max="2" step="0.05" value="0.7" oninput="document.getElementById('temp-val').textContent=this.value">
+            <span class="value" id="temp-val">0.70</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Top-P</label>
+          <div class="slider-group">
+            <input type="range" id="settings-topp" min="0" max="1" step="0.01" value="0.95" oninput="document.getElementById('topp-val').textContent=this.value">
+            <span class="value" id="topp-val">0.95</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Max output tokens</label>
+          <div class="slider-group">
+            <input type="range" id="settings-maxtokens" min="256" max="65536" step="256" value="8192" oninput="document.getElementById('tokens-val').textContent=this.value">
+            <span class="value" id="tokens-val">8192</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STT Language -->
+      <div class="settings-section">
+        <h3>🎤 Ovozli kiritish (STT) tili</h3>
+        <div class="form-group">
+          <select id="settings-stt-lang">
+            <option value="uz-UZ">O'zbekcha (uz-UZ)</option>
+            <option value="ru-RU">Русский (ru-RU)</option>
+            <option value="en-US">English (en-US)</option>
+            <option value="">Avtomatik aniqlash (brauzer)</option>
+          </select>
+          <div class="hint">STT bir vaqtning o'zida faqat bir tilni yaxshi taniydi. 
+          Agar "Avtomatik" ishlamasa, aniq tilni tanlang.</div>
+        </div>
+      </div>
+
+      <!-- Online / Local Mode -->
+      <div class="settings-section">
+        <h3>🖥 Ish rejimi</h3>
+        <div class="form-group">
+          <label>AI provayder</label>
+          <select id="settings-mode" onchange="onModeChange()">
+            <option value="online">☁️ Online (Gemini API)</option>
+            <option value="ollama">💻 Ollama (lokal server)</option>
+            <option value="local">🖥 WebLLM (brauzerda)</option>
+          </select>
+          <div class="hint">Online — Gemini API kalit talab qiladi. Ollama — lokal NVIDIA GPU da ishlaydi. WebLLM — WebGPU talab qiladi.</div>
+        </div>
+        <!-- Ollama settings -->
+        <div class="form-group" id="ollama-group" style="display:none">
+          <label>Server URL</label>
+          <div class="input-with-btn">
+            <input type="text" id="settings-ollama-url" value="http://localhost:11434" placeholder="http://localhost:11434">
+            <button onclick="checkOllamaConnection()">🔍 Test</button>
+          </div>
+          <div id="ollama-status"></div>
+          <div class="hint" style="margin-top:4px">Ollama server manzili. Telefonda ishlatish uchun PC IP manzilini yozing (masalan <code>http://192.168.1.100:11434</code>)</div>
+          <label style="margin-top:10px">Model</label>
+          <select id="settings-ollama-model">
+            <option value="">— Avval ulanishni tekshiring —</option>
+          </select>
+          <div class="hint"><a href="#" onclick="refreshOllamaModels()" style="color:var(--accent);cursor:pointer">🔄 Modellarni yangilash</a></div>
+        </div>
+        <!-- WebLLM settings -->
+        <div class="form-group" id="local-model-group" style="display:none">
+          <label>Model</label>
+          <select id="settings-local-model">
+            <option value="gemma-2-2b-it-q4f16_1-MLC">Gemma 2 2B (Q4, ~1.5 GB) — tez, kam xotira</option>
+            <option value="gemma-2-9b-it-q4f16_1-MLC">Gemma 2 9B (Q4, ~5.5 GB) — sifatli</option>
+            <option value="gemma-2-27b-it-q4f16_1-MLC">Gemma 2 27B (Q4, ~16 GB) — yuqori sifat</option>
+          </select>
+          <div id="webgpu-warning"></div>
+          <div class="model-progress" id="download-progress" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-info">
+              <span id="progress-text">0%</span>
+              <span id="progress-speed"></span>
+            </div>
+          </div>
+          <div id="local-model-status"><span class="status-waiting">⏳ Model yuklanmagan. Yuklab olish tugmasini bosing.</span></div>
+          <button id="download-model-btn" onclick="downloadLocalModel()">📥 Modelni yuklab olish</button>
+        </div>
+      </div>
+
+      <!-- Save -->
+      <div class="settings-section">
+        <button class="btn-save-settings" onclick="saveSettings()">💾 Sozlamalarni saqlash</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+// ========================================================================
+//  CONFIG & STATE
+// ========================================================================
+const DB_NAME = 'UstozBekChatDB';
+const DB_VER = 1;
+const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+
+let db = null;
+let state = {
+  currentConvId: null,
+  isStreaming: false,
+  abortController: null,
+  conversations: [],
+  settings: null
+};
+
+// ========================================================================
+//  INDEXEDDB
+// ========================================================================
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('conversations')) {
+        const s = db.createObjectStore('conversations', { keyPath: 'id', autoIncrement: true });
+        s.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('messages')) {
+        const s = db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
+        s.createIndex('conversationId', 'conversationId', { unique: false });
+      }
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbPut(store, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(data);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function dbGet(store, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGetAllByIndex(store, indexName, value) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).index(indexName).getAll(value);
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbDelete(store, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function dbClear(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ========================================================================
+//  SETTINGS
+// ========================================================================
+async function loadSettings() {
+  const s = await dbGet('settings', 'main');
+  if (s) {
+    state.settings = s;
+    document.getElementById('settings-provider').value = s.provider || 'google';
+    if (s.apiKey) document.getElementById('settings-apikey').value = s.apiKey;
+    document.getElementById('settings-system-prompt').value = s.systemPrompt || '';
+    document.getElementById('settings-user-prompt').value = s.userPlaceholder || '';
+    document.getElementById('settings-temp').value = s.temperature ?? 0.7;
+    document.getElementById('settings-topp').value = s.topP ?? 0.95;
+    document.getElementById('settings-maxtokens').value = s.maxTokens ?? 8192;
+    document.getElementById('settings-stt-lang').value = s.sttLang || 'uz-UZ';
+    document.getElementById('temp-val').textContent = (s.temperature ?? 0.7).toFixed(2);
+    document.getElementById('topp-val').textContent = (s.topP ?? 0.95).toFixed(2);
+    document.getElementById('tokens-val').textContent = s.maxTokens ?? 8192;
+    updateModelBadge();
+    return s;
+  }
+  return null;
+}
+
+function getSettings() {
+  const defaults = {
+    provider: 'google',
+    model: 'gemini-2.5-flash',
+    apiKey: '',
+    systemPrompt: '',
+    userPlaceholder: '',
+    temperature: 0.7,
+    topP: 0.95,
+    maxTokens: 8192,
+    sttLang: 'uz-UZ',
+    mode: 'online',
+    localModel: 'gemma-2-2b-it-q4f16_1-MLC',
+    ollamaUrl: 'http://localhost:11434',
+    ollamaModel: ''
+  };
+  return state.settings ? { ...defaults, ...state.settings } : defaults;
+}
+
+async function saveSettings() {
+  const s = {
+    id: 'main',
+    provider: document.getElementById('settings-provider').value,
+    model: document.getElementById('settings-model').value,
+    apiKey: document.getElementById('settings-apikey').value.trim(),
+    systemPrompt: document.getElementById('settings-system-prompt').value.trim(),
+    userPlaceholder: document.getElementById('settings-user-prompt').value.trim(),
+    temperature: parseFloat(document.getElementById('settings-temp').value),
+    topP: parseFloat(document.getElementById('settings-topp').value),
+    maxTokens: parseInt(document.getElementById('settings-maxtokens').value),
+    sttLang: document.getElementById('settings-stt-lang').value,
+    mode: document.getElementById('settings-mode').value,
+    localModel: document.getElementById('settings-local-model').value,
+    ollamaUrl: document.getElementById('settings-ollama-url').value.trim(),
+    ollamaModel: document.getElementById('settings-ollama-model').value
+  };
+  state.settings = s;
+  await dbPut('settings', s);
+  updateModelBadge();
+  updatePlaceholder();
+  showToast('✅ Sozlamalar saqlandi', 'success');
+  closeSettings();
+}
+
+function settingsToForm() {
+  const s = getSettings();
+  document.getElementById('settings-provider').value = s.provider || 'google';
+  document.getElementById('settings-apikey').value = s.apiKey || '';
+  document.getElementById('settings-system-prompt').value = s.systemPrompt || '';
+  document.getElementById('settings-user-prompt').value = s.userPlaceholder || '';
+  document.getElementById('settings-temp').value = s.temperature ?? 0.7;
+  document.getElementById('settings-topp').value = s.topP ?? 0.95;
+  document.getElementById('settings-maxtokens').value = s.maxTokens ?? 8192;
+  document.getElementById('temp-val').textContent = (s.temperature ?? 0.7).toFixed(2);
+  document.getElementById('topp-val').textContent = (s.topP ?? 0.95).toFixed(2);
+  document.getElementById('tokens-val').textContent = s.maxTokens ?? 8192;
+  document.getElementById('settings-stt-lang').value = s.sttLang || 'uz-UZ';
+  document.getElementById('settings-mode').value = s.mode || 'online';
+  document.getElementById('settings-local-model').value = s.localModel || 'gemma-2-2b-it-q4f16_1-MLC';
+  document.getElementById('settings-ollama-url').value = s.ollamaUrl || 'http://localhost:11434';
+  document.getElementById('settings-ollama-model').value = s.ollamaModel || '';
+  // Mode change UI
+  onModeChange();
+}
+
+// ========================================================================
+//  API — MODELS LIST & CHECK KEY
+// ========================================================================
+async function fetchModelsList(apiKey) {
+  const res = await fetch(`${API_BASE}/models?key=${apiKey}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+  const data = await res.json();
+  return data.models || [];
+}
+
+async function checkApiKey() {
+  const btn = document.getElementById('check-api-btn');
+  const statusDiv = document.getElementById('api-status');
+  const key = document.getElementById('settings-apikey').value.trim();
+
+  if (!key) {
+    statusDiv.className = 'api-status error';
+    statusDiv.innerHTML = '✗ API kalitni kiriting';
+    return;
+  }
+
+  btn.disabled = true;
+  statusDiv.className = 'api-status loading';
+  statusDiv.innerHTML = '<span class="spinner"></span> Tekshirilmoqda...';
+
+  try {
+    const models = await fetchModelsList(key);
+    const genModels = models.filter(m =>
+      m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
+    );
+    genModels.sort((a, b) => a.displayName?.localeCompare(b.displayName));
+
+    const select = document.getElementById('settings-model');
+    select.innerHTML = '';
+    genModels.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.name.startsWith('models/') ? m.name : 'models/' + m.name;
+      opt.textContent = m.displayName || m.name;
+      select.appendChild(opt);
+    });
+
+    if (state.settings && state.settings.model) {
+      const current = state.settings.model;
+      if ([...select.options].some(o => o.value === current)) {
+        select.value = current;
+      }
+    }
+
+    statusDiv.className = 'api-status connected';
+    statusDiv.innerHTML = `✓ Ulanish muvaffaqiyatli (${genModels.length} ta model)`;
+    showToast(`✅ API kalit tasdiqlandi (${genModels.length} model)`, 'success');
+    // API key ni avtomatik saqlash
+    autoSaveApiKey(key);
+  } catch (err) {
+    statusDiv.className = 'api-status error';
+    if (err.message.includes('403') || err.message.includes('401') || err.message.includes('400')) {
+      statusDiv.innerHTML = '✗ API kalit noto\'g\'ri yoki muddati tugagan';
+    } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('CORS') || err.message.includes('Network')) {
+      statusDiv.innerHTML = '✗ Brauzer blokladi. Faylni to\'g\'ridan-to\'g\'ri ochmang! <br>👉 <b>VS Code</b> → Live Server yoki <b>python3 -m http.server 8080</b> bilan ishga tushiring';
+    } else {
+      statusDiv.innerHTML = `✗ Xatolik: ${err.message}`;
+    }
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Tekshirish muvaffaqiyatli bo'lsa, API key va modelni avtomatik saqlash
+function autoSaveApiKey(apiKey) {
+  const s = { ...getSettings(), id: 'main', apiKey: apiKey, provider: 'google' };
+  // Model dropdown dan tanlangan modelni olish
+  const modelSelect = document.getElementById('settings-model');
+  if (modelSelect.value) s.model = modelSelect.value;
+  state.settings = s;
+  dbPut('settings', s).catch(() => {});
+  updateModelBadge();
+  updatePlaceholder();
+}
+
+async function refreshModels() {
+  const key = document.getElementById('settings-apikey').value.trim();
+  if (!key) {
+    showToast('⚠️ Avval API kalitni kiriting', 'error');
+    return;
+  }
+  await checkApiKey();
+}
+
+function onProviderChange() {
+  clearApiStatus();
+}
+
+function clearApiStatus() {
+  document.getElementById('api-status').className = '';
+  document.getElementById('api-status').innerHTML = '';
+}
+
+// ========================================================================
+//  CONVERSATIONS
+// ========================================================================
+async function loadConversations() {
+  state.conversations = await dbGetAll('conversations');
+  state.conversations.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  renderConversationList();
+}
+
+async function newConversation() {
+  state.currentConvId = null;
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('conv-title').textContent = 'Yangi chat';
+  document.querySelector('#empty-state').style.display = 'flex';
+  updatePlaceholder();
+  updateModelBadge();
+  renderConversationList();
+  // Mobile: sidebar yopish
+  if (window.innerWidth <= 768) toggleSidebar();
+}
+
+async function selectConversation(id) {
+  state.currentConvId = id;
+  const convs = await dbGetAllByIndex('messages', 'conversationId', id);
+  const msgs = convs || [];
+  const container = document.getElementById('messages');
+  container.innerHTML = '';
+  document.querySelector('#empty-state').style.display = 'none';
+
+  msgs.forEach(m => renderMessage(m.role, m.parts, m.thinking));
+
+  const conv = state.conversations.find(c => c.id === id);
+  if (conv) {
+    document.getElementById('conv-title').textContent = conv.title || 'Chat';
+    document.getElementById('model-badge').textContent = conv.model || getSettings().model || '—';
+  }
+  renderConversationList();
+  setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+
+  if (window.innerWidth <= 768) toggleSidebar();
+}
+
+async function deleteConversation(id) {
+  if (!confirm('Oʻchirilsinmi?')) return;
+  const tx = db.transaction(['conversations', 'messages'], 'readwrite');
+  tx.objectStore('conversations').delete(id);
+  const index = tx.objectStore('messages').index('conversationId');
+  const req = index.openCursor(IDBKeyRange.only(id));
+  req.onsuccess = (e) => {
+    const cursor = e.target.result;
+    if (cursor) {
+      tx.objectStore('messages').delete(cursor.primaryKey);
+      cursor.continue();
+    }
+  };
+  await new Promise(resolve => tx.oncomplete = resolve);
+  state.conversations = state.conversations.filter(c => c.id !== id);
+  if (state.currentConvId === id) newConversation();
+  else renderConversationList();
+  showToast('🗑 Chat oʻchirildi', 'info');
+}
+
+async function togglePin() {
+  if (!state.currentConvId) return;
+  const conv = state.conversations.find(c => c.id === state.currentConvId);
+  if (!conv) return;
+  conv.pinned = !conv.pinned;
+  await dbPut('conversations', conv);
+  renderConversationList();
+  showToast(conv.pinned ? '📌 Chat pinlandi' : '📌 Pin olib tashlandi', 'info');
+}
+
+// ========================================================================
+//  MESSAGE RENDER
+// ========================================================================
+function renderMessage(role, parts, thinking) {
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `message ${role === 'user' ? 'user' : 'assistant'}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = role === 'user' ? '👤' : '✦';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  if (role === 'user') {
+    parts.forEach(p => {
+      if (p.text) {
+        const el = document.createElement('p');
+        el.textContent = p.text;
+        bubble.appendChild(el);
+      }
+      if (p.inlineData) {
+        const img = document.createElement('img');
+        img.src = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        img.style.maxWidth = '240px';
+        bubble.appendChild(img);
+      }
+    });
+  } else {
+    if (thinking) {
+      const details = document.createElement('details');
+      details.className = 'thinking-block';
+      details.innerHTML = `<summary>🧠 Mulohaza yuritish</summary><div class="thinking-content">${escapeHtml(thinking)}</div>`;
+      bubble.appendChild(details);
+    }
+    parts.forEach(p => {
+      if (p.text) {
+        const rendered = marked.parse(p.text, { breaks: true });
+        const tmp = document.createElement('div');
+        tmp.innerHTML = rendered;
+        // Code bloklariga highlight + copy button
+        tmp.querySelectorAll('pre code').forEach(block => {
+          hljs.highlightElement(block);
+          const pre = block.parentElement;
+          const btn = document.createElement('button');
+          btn.className = 'copy-btn';
+          btn.textContent = '📋';
+          btn.onclick = () => {
+            navigator.clipboard.writeText(block.textContent);
+            btn.textContent = '✅';
+            btn.classList.add('copied');
+            btn.closest('.message')?.classList.add('glow');
+            setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1500);
+          };
+          pre.appendChild(btn);
+        });
+        bubble.appendChild(tmp.firstChild && tmp.firstChild.nodeType === 1 ? tmp : tmp.firstChild || document.createTextNode(p.text));
+        while (tmp.childNodes.length > 0) {
+          bubble.appendChild(tmp.childNodes[0]);
+        }
+      }
+    });
+    // Jadvallarni chiroyli qilish
+    enhanceTables(bubble);
+    enhanceCallouts(bubble);
+    enhanceImages(bubble);
+    enhanceFiles(bubble);
+    enhanceTimelines(bubble);
+    enhanceMermaid(bubble);
+    enhanceJSON(bubble);
+    enhanceCodeBlocks(bubble);
+    enhanceTaskLists(bubble);
+    enhanceMath(bubble);
+  }
+
+  // Vaqt tamg'asi
+  const timeEl = document.createElement('div');
+  timeEl.className = 'msg-time';
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  timeEl.textContent = `${h}:${m}`;
+
+  if (role === 'user') {
+    div.append(bubble, avatar, timeEl);
+  } else {
+    div.append(avatar, bubble, timeEl);
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ========================================================================
+//  TABLE ENHANCER — jadvallarni chiroyli qilish
+// ========================================================================
+function enhanceTables(container) {
+  if (!container) return;
+  const tables = container.querySelectorAll('table');
+  tables.forEach(table => {
+    // Oramaga o'ralib qolmasin
+    if (table.closest('.table-wrapper')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-wrapper';
+
+    // Jadval o'lchamiga qarab compact class qo'shish
+    const cols = table.querySelectorAll('tr:first-child th, tr:first-child td').length;
+    if (cols > 6) wrapper.classList.add('compact');
+
+    // Qatorlar soni
+    const rows = table.querySelectorAll('tbody tr').length;
+
+    // Info bar (agar 3+ qator bo'lsa)
+    if (rows >= 3) {
+      const infoBar = document.createElement('div');
+      infoBar.className = 'table-info';
+      const span = document.createElement('span');
+      span.className = 'table-rows';
+      span.textContent = `${rows} qator`;
+      infoBar.appendChild(span);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'table-copy-btn';
+      copyBtn.textContent = '📋 nusxalash';
+      copyBtn.onclick = () => {
+        let csv = '';
+        table.querySelectorAll('tr').forEach(tr => {
+          const cells = [];
+          tr.querySelectorAll('th, td').forEach(td => {
+            cells.push('"' + td.textContent.replace(/"/g, '""') + '"');
+          });
+          csv += cells.join(',') + '\n';
+        });
+        navigator.clipboard.writeText(csv);
+        copyBtn.textContent = '✅ nusxalandi';
+        setTimeout(() => copyBtn.textContent = '📋 nusxalash', 2000);
+      };
+      infoBar.appendChild(copyBtn);
+
+      // Chart.js diagramma tugmasi (faqat sonli jadvallar uchun)
+      const hasNumeric = table.querySelectorAll('tbody tr td').length > 0 &&
+        Array.from(table.querySelectorAll('tbody tr td')).some(td => !isNaN(parseFloat(td.textContent.trim().replace(/[^0-9.,-]/g, ''))));
+      if (hasNumeric) {
+        const chartBtn = document.createElement('button');
+        chartBtn.className = 'table-copy-btn';
+        chartBtn.textContent = '📊 diagramma';
+        chartBtn.onclick = () => {
+          if (wrapper.querySelector('.chart-container')) {
+            wrapper.querySelector('.chart-container').remove();
+            return;
+          }
+          const container = document.createElement('div');
+          container.className = 'chart-container';
+          container.innerHTML = '<canvas></canvas>';
+          wrapper.appendChild(container);
+          loadChartJS(() => renderTableChart(table, container.querySelector('canvas')));
+        };
+        infoBar.appendChild(chartBtn);
+      }
+
+      wrapper.appendChild(infoBar);
+    }
+
+    // Sortable headerlar
+    const headers = table.querySelectorAll('thead tr th');
+    if (headers.length > 0) {
+      headers.forEach((th, colIdx) => {
+        const sortIcon = document.createElement('span');
+        sortIcon.className = 'sort-icon';
+        sortIcon.textContent = '⇅';
+        th.appendChild(sortIcon);
+
+        let sortDir = null;
+        th.addEventListener('click', () => {
+          const tbody = table.querySelector('tbody');
+          if (!tbody) return;
+
+          // Barcha headerlardan sorted classni olib tashlash
+          headers.forEach(h => {
+            h.classList.remove('sorted-asc', 'sorted-desc');
+          });
+
+          // Navbatdagi tartib
+          if (sortDir === 'asc') {
+            sortDir = 'desc';
+            th.classList.add('sorted-desc');
+          } else {
+            sortDir = 'asc';
+            th.classList.add('sorted-asc');
+          }
+
+          const trs = [...tbody.querySelectorAll('tr')];
+          trs.sort((a, b) => {
+            const aVal = (a.cells[colIdx]?.textContent || '').trim();
+            const bVal = (b.cells[colIdx]?.textContent || '').trim();
+            const aNum = parseFloat(aVal.replace(/[^0-9.,-]/g, ''));
+            const bNum = parseFloat(bVal.replace(/[^0-9.,-]/g, ''));
+            const useNum = !isNaN(aNum) && !isNaN(bNum);
+            if (useNum) {
+              return sortDir === 'asc' ? aNum - bNum : bNum - aNum;
+            }
+            return sortDir === 'asc'
+              ? aVal.localeCompare(bVal, undefined, { numeric: true })
+              : bVal.localeCompare(aVal, undefined, { numeric: true });
+          });
+          trs.forEach(tr => tbody.appendChild(tr));
+        });
+      });
+    }
+
+    // Jadvalni wrapper ichiga olish
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  });
+}
+
+function enhanceCallouts(container) {
+  if (!container) return;
+  container.querySelectorAll('blockquote').forEach(bq => {
+    const firstP = bq.querySelector('p');
+    if (!firstP) return;
+    const text = firstP.textContent || '';
+    const match = text.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+    if (!match) return;
+    const type = match[1].toLowerCase();
+    // Remove the [!TYPE] prefix from the first paragraph
+    firstP.textContent = text.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i, '').trim();
+    const titleEl = document.createElement('div');
+    titleEl.className = 'callout-title';
+    const icons = { note: 'ℹ️', tip: '💡', important: '❕', warning: '⚠️', caution: '🔥' };
+    titleEl.innerHTML = `${icons[type] || '📌'} ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    const contentEl = document.createElement('div');
+    contentEl.className = 'callout-content';
+    while (bq.firstChild) contentEl.appendChild(bq.firstChild);
+    bq.innerHTML = '';
+    bq.className = `callout callout-${type}`;
+    bq.appendChild(titleEl);
+    bq.appendChild(contentEl);
+  });
+}
+
+function enhanceCodeBlocks(container) {
+  if (!container) return;
+  container.querySelectorAll('pre code').forEach(code => {
+    const pre = code.parentElement;
+    // Header allaqachon qo'shilgan bo'lsa, o'tkazib yuborish
+    if (pre.dataset.enhanced) return;
+
+    // Tilni aniqlash
+    let lang = '';
+    for (const cls of code.classList) {
+      if (cls.startsWith('language-')) { lang = cls.slice(9); break; }
+      if (cls.startsWith('lang-')) { lang = cls.slice(5); break; }
+    }
+    // highlight.js qo'shimcha klasslaridan
+    if (!lang) {
+      const parentPre = code.parentElement;
+      if (parentPre && parentPre.dataset.lang) lang = parentPre.dataset.lang;
+    }
+
+    // Qatorlar soni
+    const text = code.textContent || '';
+    const totalLines = text.split('\n').length;
+
+    // Qatorlarni <span class="cl"> ga o'rash
+    // highlight.js chiqishidagi HTML strukturasini saqlab, qatorlarga ajratamiz
+    const html = code.innerHTML;
+    const lineSpans = [];
+    // highlight.js har bir qatorni <span> lar bilan chiqaradi,
+    // qatorlar \n bilan ajratilgan bo'ladi
+    const lines = html.split('\n');
+    // Oxirgi bo'sh qatorni olib tashlash
+    if (lines.length > 1 && lines[lines.length-1].trim() === '') lines.pop();
+    
+    lines.forEach((lineHtml, i) => {
+      const span = document.createElement('span');
+      span.className = 'cl';
+      span.innerHTML = lineHtml || ' ';
+      lineSpans.push(span.outerHTML);
+    });
+
+    code.innerHTML = lineSpans.join('');
+    code.classList.add('code-lines');
+
+    // Header yaratish
+    const header = document.createElement('div');
+    header.className = 'code-header';
+    const langSpan = document.createElement('span');
+    langSpan.className = 'code-lang';
+    langSpan.textContent = lang || 'code';
+    header.appendChild(langSpan);
+    const countSpan = document.createElement('span');
+    countSpan.className = 'code-lines-count';
+    countSpan.textContent = `${totalLines} qator`;
+    header.appendChild(countSpan);
+
+    // Header ni pre dan oldin joylashtirish
+    pre.parentNode.insertBefore(header, pre);
+
+    // Katta kod bloklari uchun collapsible
+    if (totalLines > 20) {
+      pre.classList.add('code-collapsed');
+      const lines = code.querySelectorAll('.cl');
+      // 20-qatordan keyingilarni o'rash
+      let overflowStart = null;
+      lines.forEach((line, idx) => {
+        if (idx >= 18) { // 19-20 qator ko'rsatiladi, 21+ yashirin
+          if (!overflowStart) overflowStart = idx;
+          line.classList.add('code-overflow');
+        }
+      });
+
+      const toggle = document.createElement('div');
+      toggle.className = 'code-toggle';
+      toggle.textContent = `📄 Ko'rsatish (${totalLines - 18} qator)`;
+      toggle.onclick = () => {
+        const isCollapsed = pre.classList.toggle('code-collapsed');
+        toggle.textContent = isCollapsed
+          ? `📄 Ko'rsatish (${totalLines - 18} qator)`
+          : `📂 Yashirish`;
+      };
+      pre.parentNode.insertBefore(toggle, pre.nextSibling);
+    }
+
+    pre.dataset.enhanced = 'true';
+  });
+}
+
+function enhanceTaskLists(container) {
+  if (!container) return;
+  container.querySelectorAll('ul, ol').forEach(list => {
+    // Faqat checkbox'li listlarni ishlaymiz
+    const items = list.querySelectorAll('li');
+    let hasCheckbox = false;
+    items.forEach(li => {
+      if (li.querySelector('input[type="checkbox"]')) hasCheckbox = true;
+    });
+    if (!hasCheckbox) return;
+    if (list.closest('.task-list-wrapper')) return;
+
+    // Checkbox'larni interactive qilish + done class
+    items.forEach(li => {
+      const cb = li.querySelector('input[type="checkbox"]');
+      if (!cb) return;
+      cb.disabled = false;
+      if (cb.checked) li.classList.add('done');
+      cb.addEventListener('change', () => {
+        li.classList.toggle('done', cb.checked);
+        // Progress barni yangilash
+        const wrapper = list.closest('.task-list-wrapper');
+        if (wrapper) updateTaskProgress(wrapper);
+      });
+    });
+
+    // Progress bar hisoblash
+    const wrapper = document.createElement('div');
+    wrapper.className = 'task-list-wrapper';
+
+    function updateTaskProgress(w) {
+      const allItems = w.querySelectorAll('li');
+      const total = allItems.length;
+      const done = w.querySelectorAll('li.done').length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      const fill = w.querySelector('.progress-bar-fill');
+      const count = w.querySelector('.task-count');
+      if (fill) fill.style.width = pct + '%';
+      if (count) count.textContent = `${done}/${total} (${pct}%)`;
+    }
+
+    // Progress bar HTML
+    const progressDiv = document.createElement('div');
+    progressDiv.className = 'task-list-progress';
+    progressDiv.innerHTML = `<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:0%"></div></div><span class="task-count">0/0 (0%)</span>`;
+    wrapper.appendChild(progressDiv);
+
+    // Listni wrapper ichiga olish
+    list.parentNode.insertBefore(wrapper, list);
+    wrapper.appendChild(list);
+
+    // Boshlang'ich progress
+    updateTaskProgress(wrapper);
+    wrapper.updateTaskProgress = () => updateTaskProgress(wrapper);
+  });
+}
+
+// ===== KATEX MATEMATIKA RENDER =====
+let katexLoaded = false;
+let katexLoading = false;
+
+function loadKaTeX(callback) {
+  if (katexLoaded) { if (callback) callback(); return; }
+  if (katexLoading) { setTimeout(() => loadKaTeX(callback), 200); return; }
+  katexLoading = true;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css';
+  document.head.appendChild(link);
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
+  script.onload = () => {
+    katexLoaded = true;
+    katexLoading = false;
+    if (callback) callback();
+  };
+  script.onerror = () => {
+    katexLoading = false;
+    console.warn('KaTeX yuklanmadi');
+  };
+  document.head.appendChild(script);
+}
+
+function enhanceMath(container) {
+  if (!container) return;
+  // Blok matematika: $$...$$
+  let found = false;
+  container.querySelectorAll('p, div, li, td, th').forEach(el => {
+    const html = el.innerHTML;
+    // Blok matematika $$...$$
+    const blockRegex = /\$\$([\s\S]*?)\$\$/g;
+    if (blockRegex.test(html)) {
+      found = true;
+      el.innerHTML = html.replace(blockRegex, (match, expr) => {
+        const trimmed = expr.trim();
+        if (katexLoaded) {
+          try {
+            const html2 = window.katex.renderToString(trimmed, { displayMode: true, throwOnError: false });
+            return `<div class="katex-block">${html2}</div>`;
+          } catch(e) {
+            return `<div class="katex-block math-loading">${trimmed}</div>`;
+          }
+        }
+        return `<div class="katex-block math-loading">${trimmed}</div>`;
+      });
+    }
+    // Inline matematika $...$ (lekin $$ ni emas)
+    const inlineRegex = /(?<!\$)\$([^\$\n]+?)\$(?!\$)/g;
+    if (inlineRegex.test(el.innerHTML)) {
+      found = true;
+      el.innerHTML = el.innerHTML.replace(inlineRegex, (match, expr) => {
+        if (katexLoaded) {
+          try {
+            const html2 = window.katex.renderToString(expr.trim(), { displayMode: false, throwOnError: false });
+            return `<span class="katex-inline">${html2}</span>`;
+          } catch(e) {
+            return `<span class="katex-inline math-loading">${expr}</span>`;
+          }
+        }
+        return `<span class="katex-inline math-loading">${expr}</span>`;
+      });
+    }
+  });
+  if (found && !katexLoaded) loadKaTeX(() => enhanceMath(container));
+}
+
+// ===== MERMAID DIAGRAM =====
+let mermaidLoaded = false;
+let mermaidLoading = false;
+
+function loadMermaid(callback) {
+  if (mermaidLoaded) { if (callback) callback(); return; }
+  if (mermaidLoading) { setTimeout(() => loadMermaid(callback), 200); return; }
+  mermaidLoading = true;
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+  script.onload = () => {
+    mermaidLoaded = true;
+    mermaidLoading = false;
+    window.mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: {
+      background: 'transparent',
+      primaryColor: 'var(--primary)',
+      secondaryColor: 'var(--surface2)',
+      tertiaryColor: 'var(--surface3)',
+      primaryTextColor: 'var(--text)',
+      secondaryTextColor: 'var(--text2)',
+      lineColor: 'var(--text3)',
+      fontSize: '13px'
+    }});
+    if (callback) callback();
+  };
+  script.onerror = () => {
+    mermaidLoading = false;
+    console.warn('Mermaid yuklanmadi');
+  };
+  document.head.appendChild(script);
+}
+
+function enhanceMermaid(container) {
+  if (!container) return;
+  let found = false;
+  container.querySelectorAll('pre code.language-mermaid, pre code.lang-mermaid').forEach(code => {
+    const pre = code.parentElement;
+    if (pre.dataset.mermaid) return;
+    const source = code.textContent.trim();
+    if (!source) return;
+    found = true;
+    const div = document.createElement('div');
+    div.className = 'mermaid';
+    div.textContent = source;
+    // Pre o'rniga mermaid div qo'yish
+    pre.parentNode.replaceChild(div, pre);
+    // Mermaid SVG render
+    if (mermaidLoaded) {
+      try {
+        window.mermaid.run({ nodes: [div] });
+      } catch(e) { console.warn('Mermaid render error:', e); }
+    }
+  });
+  if (found && !mermaidLoaded) loadMermaid(() => enhanceMermaid(container));
+}
+
+// ===== JSON TREE VIEWER =====
+function buildJSONTree(obj, isLast) {
+  const type = typeof obj;
+  if (obj === null) return `<span class="jnull">null</span>${isLast ? '' : '<span class="jcomma">,</span>'}`;
+  if (type === 'string') return `<span class="jstring">"${obj.replace(/"/g, '\\"').replace(/</g, '&lt;')}"</span>${isLast ? '' : '<span class="jcomma">,</span>'}`;
+  if (type === 'number') return `<span class="jnumber">${obj}</span>${isLast ? '' : '<span class="jcomma">,</span>'}`;
+  if (type === 'boolean') return `<span class="jbool">${obj}</span>${isLast ? '' : '<span class="jcomma">,</span>'}`;
+
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) return `<span class="jbracket">[ ]</span>${isLast ? '' : '<span class="jcomma">,</span>'}`;
+    const id = 'ja-' + Math.random().toString(36).slice(2, 8);
+    let html = `<span class="jtoggle open" id="${id}-t" onclick="
+      document.getElementById('${id}-c').classList.toggle('jcollapsed');
+      this.classList.toggle('open');
+    ">▶</span><span class="jbracket">[</span><span class="jellipsis" id="${id}-e" style="display:none"> … </span>`;
+    html += `<div class="jnode" id="${id}-c">`;
+    obj.forEach((item, i) => {
+      html += `<div class="jprop"><span class="jvalue">${buildJSONTree(item, i === obj.length - 1)}</span></div>`;
+    });
+    html += `</div><span class="jbracket">]</span>${isLast ? '' : '<span class="jcomma">,</span>'}`;
+    return html;
+  }
+
+  // Object
+  const keys = Object.keys(obj);
+  if (keys.length === 0) return `<span class="jbracket">{ }</span>${isLast ? '' : '<span class="jcomma">,</span>'}`;
+  const id = 'jo-' + Math.random().toString(36).slice(2, 8);
+  let html = `<span class="jtoggle open" id="${id}-t" onclick="
+    document.getElementById('${id}-c').classList.toggle('jcollapsed');
+    this.classList.toggle('open');
+  ">▶</span><span class="jbracket">{</span><span class="jellipsis" id="${id}-e" style="display:none"> … </span>`;
+  html += `<div class="jnode" id="${id}-c">`;
+  keys.forEach((key, i) => {
+    html += `<div class="jprop"><span class="jkey">"${key}"</span><span class="jcomma">: </span><span class="jvalue">${buildJSONTree(obj[key], i === keys.length - 1)}</span></div>`;
+  });
+  html += `</div><span class="jbracket">}</span>${isLast ? '' : '<span class="jcomma">,</span>'}`;
+  return html;
+}
+
+function enhanceJSON(container) {
+  if (!container) return;
+  container.querySelectorAll('pre code').forEach(code => {
+    const pre = code.parentElement;
+    // Mermaid yoki allaqachon ishlangan bloklarni o'tkazib yuborish
+    if (pre.dataset.mermaid || pre.dataset.jsonTree || pre.dataset.enhanced) return;
+    const text = code.textContent.trim();
+    // JSON validatsiyasi
+    let obj;
+    try {
+      obj = JSON.parse(text);
+    } catch(e) { return; }
+    // JSON ga o'xshaydi - tree viewer bilan almashtiramiz
+    pre.dataset.jsonTree = 'true';
+    const tree = document.createElement('div');
+    tree.className = 'json-tree';
+    tree.innerHTML = buildJSONTree(obj, true);
+    pre.parentNode.replaceChild(tree, pre);
+  });
+}
+
+// ===== LIGHTBOX IMAGE GALLERY =====
+function enhanceImages(container) {
+  if (!container) return;
+  const imgs = container.querySelectorAll('p img, div img');
+  if (imgs.length === 0) return;
+  // Rasmli p/div larni gallery wrapper ga o'rash
+  imgs.forEach(img => {
+    if (img.closest('.img-gallery') || img.closest('.lightbox-overlay')) return;
+    const parent = img.parentElement;
+    // <p> ichidagi rasm
+    if (parent && parent.tagName === 'P' && parent.querySelectorAll('img').length >= 1) {
+      // Agar p da faqat rasm bo'lsa, wrapper qilamiz
+      const allImgs = parent.querySelectorAll('img');
+      if (allImgs.length === parent.children.length) {
+        const gallery = document.createElement('div');
+        gallery.className = 'img-gallery';
+        allImgs.forEach(siblingImg => {
+          siblingImg.style.cursor = 'pointer';
+          siblingImg.onclick = () => openLightbox(siblingImg.src);
+          gallery.appendChild(siblingImg.cloneNode());
+        });
+        parent.replaceWith(gallery);
+      } else {
+        img.style.cursor = 'pointer';
+        img.onclick = () => openLightbox(img.src);
+      }
+    }
+  });
+}
+
+function openLightbox(src) {
+  const overlay = document.getElementById('lightbox-overlay') || (function() {
+    const el = document.createElement('div');
+    el.id = 'lightbox-overlay';
+    el.className = 'lightbox-overlay';
+    el.innerHTML = '<span class="lightbox-close">&times;</span><img src="" alt=""/>';
+    el.onclick = (e) => { if (e.target === el) el.classList.remove('open'); };
+    el.querySelector('.lightbox-close').onclick = () => el.classList.remove('open');
+    document.body.appendChild(el);
+    return el;
+  })();
+  overlay.querySelector('img').src = src;
+  overlay.classList.add('open');
+}
+
+// ===== FILE PREVIEW CARD =====
+function enhanceFiles(container) {
+  if (!container) return;
+  container.querySelectorAll('a[href]').forEach(a => {
+    if (a.closest('.file-card')) return;
+    const href = a.getAttribute('href') || '';
+    // Faqat fayl URL larini ishlaymiz (rasm, pdf, doc va h.k.)
+    if (!href.match(/\.(pdf|docx?|xlsx?|pptx?|zip|rar|txt|csv|json|xml|py|js|ts|css|html?)$/i)) return;
+    const fileName = href.split('/').pop() || 'file';
+    const iconMap = { pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📽️', pptx: '📽️', zip: '📦', rar: '📦', txt: '📃', csv: '📋', json: '📋', xml: '📋', py: '🐍', js: '🟨', ts: '🔷', css: '🎨', html: '🌐' };
+    const ext = fileName.split('.').pop().toLowerCase();
+    const icon = iconMap[ext] || '📎';
+    const card = document.createElement('div');
+    card.className = 'file-card';
+    card.innerHTML = `<span class="file-icon">${icon}</span><div class="file-info"><div class="file-name">${fileName}</div><div class="file-size">.${ext}</div></div><a class="file-action" href="${href}" target="_blank" rel="noopener">${href.startsWith('data:') ? '📥 Yuklash' : '🔗 Ochish'}</a>`;
+    a.replaceWith(card);
+  });
+}
+
+// ===== TIMELINE VIZUAL =====
+function enhanceTimelines(container) {
+  if (!container) return;
+  container.querySelectorAll('ul, ol').forEach(list => {
+    if (list.closest('.timeline')) return;
+    const items = list.querySelectorAll('li');
+    let timelineCount = 0;
+    items.forEach(li => {
+      const text = li.textContent.trim();
+      // Sana/vaqt patterni: "2024-Q1", "2024", "Q1 2024", "Yanvar 2024" va h.k.
+      if (text.match(/^(\d{4}-Q[1-4]|\d{4}|\w+ \d{4}|Q[1-4] \d{4}|\d{2}\/\d{4}|\d{4}\/\d{2}):/)) {
+        timelineCount++;
+      }
+    });
+    // Agar 50%+ li larda sana patterni bo'lsa, timeline ga aylantiramiz
+    if (timelineCount > 0 && timelineCount >= items.length * 0.4) {
+      list.classList.add('timeline');
+      items.forEach(li => {
+        const match = li.innerHTML.match(/^<strong>([^<]+)<\/strong>:\s*/);
+        if (match) {
+          const dateSpan = document.createElement('span');
+          dateSpan.className = 'tl-date';
+          dateSpan.textContent = match[1];
+          li.innerHTML = li.innerHTML.replace(/^<strong>[^<]+<\/strong>:\s*/, '');
+          li.insertBefore(dateSpan, li.firstChild);
+        }
+      });
+    }
+  });
+}
+
+// ===== CHART.JS (jadvaldan diagramma) =====
+let chartJSLoaded = false;
+let chartJSLoading = false;
+
+function loadChartJS(callback) {
+  if (chartJSLoaded) { if (callback) callback(); return; }
+  if (chartJSLoading) { setTimeout(() => loadChartJS(callback), 200); return; }
+  chartJSLoading = true;
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+  script.onload = () => {
+    chartJSLoaded = true;
+    chartJSLoading = false;
+    if (callback) callback();
+  };
+  document.head.appendChild(script);
+}
+
+function renderTableChart(table, canvas) {
+  if (!canvas || !window.Chart) return;
+  // Birinchi ustun — label, qolganlari — datasetlar
+  const rows = table.querySelectorAll('tbody tr');
+  if (rows.length < 2) return;
+  const labels = [];
+  const datasets = [];
+  const colCount = table.querySelectorAll('thead tr th, thead tr td').length;
+
+  for (let col = 1; col < colCount; col++) {
+    const data = [];
+    let colName = (table.querySelectorAll('thead tr th, thead tr td')[col] || {}).textContent || `Col ${col}`;
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td, th');
+      if (col === 1) labels.push(cells[0]?.textContent.trim() || '');
+      const val = parseFloat((cells[col]?.textContent || '').trim().replace(/[^0-9.,-]/g, '').replace(',', '.'));
+      data.push(isNaN(val) ? 0 : val);
+    });
+    const colors = ['rgba(59,130,246,0.7)', 'rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)', 'rgba(139,92,246,0.7)'];
+    datasets.push({
+      label: colName, data, borderColor: colors[(col-1) % colors.length].replace('0.7', '1'),
+      backgroundColor: colors[(col-1) % colors.length],
+      borderWidth: 2, tension: 0.3
+    });
+  }
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { color: '#ccc', font: { size: 11 } } } },
+      scales: { x: { ticks: { color: '#999' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+               y: { beginAtZero: true, ticks: { color: '#999' }, grid: { color: 'rgba(255,255,255,0.05)' } } }
+    }
+  });
+}
+
+// ========================================================================
+//  CHAT ENGINE
+// ========================================================================
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text && !pendingFiles.length) return;
+
+  const settings = getSettings();
+
+  // ===== LOCAL MODE ROUTING (API key kerak emas) =====
+  if (settings.mode === 'local') {
+    document.querySelector('#empty-state').style.display = 'none';
+    if (!localEngineLoaded) {
+      if (localEngineLoading) {
+        showToast('⏳ Model hali yuklanmoqda. Iltimos kuting...', 'warning');
+      } else {
+        showToast('⚠️ Lokal model yuklanmagan. Settings → "Modelni yuklab olish" tugmasini bosing.', 'error');
+        openSettings();
+      }
+      return;
+    }
+    await sendMessageLocal(text);
+    return;
+  }
+
+  // ===== OLLAMA MODE ROUTING (lokal server) =====
+  if (settings.mode === 'ollama') {
+    document.querySelector('#empty-state').style.display = 'none';
+    if (!settings.ollamaUrl || !settings.ollamaModel) {
+      showToast('⚠️ Ollama server URL va modelni sozlamalarda tekshiring', 'error');
+      openSettings();
+      return;
+    }
+    await sendMessageOllama(text);
+    return;
+  }
+
+  // ===== ONLINE MODE (Gemini API) =====
+  // Agar API key state da bo'lmasa, forma maydonidan olish
+  if (!settings.apiKey) {
+    const formKey = document.getElementById('settings-apikey').value.trim();
+    if (formKey) {
+      settings.apiKey = formKey;
+      state.settings = { ...settings, id: 'main', apiKey: formKey };
+      dbPut('settings', state.settings).catch(() => {});
+    }
+  }
+  if (!settings.apiKey) {
+    showToast('⚠️ Sozlamalarda API kalitni kiriting', 'error');
+    openSettings();
+    return;
+  }
+  // Agar model bo'lmasa, formadagi modelni olish
+  if (!settings.model) {
+    const formModel = document.getElementById('settings-model').value;
+    if (formModel) {
+      settings.model = formModel;
+    }
+  }
+  if (!settings.model) {
+    showToast('⚠️ Sozlamalarda modelni tanlang (API kalitni tekshiring)', 'error');
+    openSettings();
+    return;
+  }
+
+  // empty state ni yashirish
+  document.querySelector('#empty-state').style.display = 'none';
+  // ===== ONLINE MODE (Gemini API) =====
+
+  // Agar conversation bo'lmasa, yangi yaratish
+  let convId = state.currentConvId;
+  if (!convId) {
+    const conv = {
+      title: text.slice(0, 50) + (text.length > 50 ? '...' : ''),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      model: settings.model,
+      systemPrompt: settings.systemPrompt,
+      pinned: false
+    };
+    const tx = db.transaction('conversations', 'readwrite');
+    const req = tx.objectStore('conversations').add(conv);
+    await new Promise(resolve => tx.oncomplete = resolve);
+    convId = req.result;
+    state.currentConvId = convId;
+    state.conversations.unshift({ ...conv, id: convId });
+    renderConversationList();
+  }
+
+  // User message
+  const userParts = [{ text }];
+  for (const f of pendingFiles) {
+    userParts.push({
+      inlineData: { mimeType: f.type, data: f.base64 }
+    });
+  }
+  pendingFiles = [];
+  updateFileBtn();
+
+  const userMsg = { conversationId: convId, role: 'user', parts: userParts, timestamp: new Date().toISOString() };
+  await dbPut('messages', userMsg);
+  renderMessage('user', userParts, null);
+  input.value = '';
+  input.style.height = 'auto';
+
+  // Loading indicator
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'message assistant';
+  loadingDiv.id = 'loading-msg';
+  loadingDiv.innerHTML = `<div class="avatar">✦</div><div class="bubble">${createTypingDots()}</div>`;
+  document.getElementById('messages').appendChild(loadingDiv);
+
+  // Stream params
+  const systemPrompt = getSystemPromptForConv(convId);
+  const history = await getHistory(convId);
+
+  state.abortController = new AbortController();
+  state.isStreaming = true;
+  document.getElementById('send-btn').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'flex';
+
+  try {
+    const model = settings.model.startsWith('models/') ? settings.model : `models/${settings.model}`;
+    const url = `${API_BASE}/${model}:streamGenerateContent?alt=sse&key=${settings.apiKey}`;
+
+    const body = {
+      contents: history,
+      generationConfig: {
+        temperature: settings.temperature,
+        topP: settings.topP,
+        maxOutputTokens: settings.maxTokens
+      }
+    };
+    // System prompt faqat bo'sh bo'lmasagina yuboriladi
+    if (systemPrompt) {
+      body.system_instruction = { parts: [{ text: systemPrompt }] };
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: state.abortController.signal
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errText}`);
+    }
+
+    // Loading ni o'chirish
+    const loadingEl = document.getElementById('loading-msg');
+    if (loadingEl) loadingEl.remove();
+
+    // Streaming
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let fullText = '';
+    let thinkingText = '';
+    let inThinking = false;
+    let thinkingStarted = false;
+
+    // Yangi assistant message container — ID ishlatilmaydi!
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message assistant';
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'avatar';
+    avatarDiv.textContent = '✦';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    msgDiv.append(avatarDiv, bubble);
+    document.getElementById('messages').appendChild(msgDiv);
+
+    // Thinking block uchun reference (ID o'rniga)
+    let thinkingDetails = null;
+    let thinkingContentEl = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr || jsonStr === '[DONE]') continue;
+          try {
+            const data = JSON.parse(jsonStr);
+            const candidates = data.candidates || [];
+            for (const c of candidates) {
+              const parts = c.content?.parts || [];
+              for (const p of parts) {
+                if (p.text) {
+                  fullText += p.text;
+                }
+                if (p.thought) {
+                  if (!thinkingStarted) {
+                    thinkingStarted = true;
+                    // Thinking block — ID ishlatilmaydi!
+                    thinkingDetails = document.createElement('details');
+                    thinkingDetails.className = 'thinking-block';
+                    const summary = document.createElement('summary');
+                    summary.textContent = '🧠 Mulohaza yuritish';
+                    thinkingContentEl = document.createElement('div');
+                    thinkingContentEl.className = 'thinking-content';
+                    thinkingDetails.append(summary, thinkingContentEl);
+                    bubble.appendChild(thinkingDetails);
+                  }
+                  thinkingText += p.thought;
+                  if (thinkingContentEl) thinkingContentEl.textContent = thinkingText;
+                }
+              }
+            }
+          } catch (e) {
+            // parse error
+          }
+        }
+      }
+
+      // Real-time render — to'g'ri bubble reference ishlatiladi!
+      bubble.innerHTML = marked.parse(fullText, { breaks: true });
+      // Kod highlight
+      bubble.querySelectorAll('pre code').forEach(block => {
+        hljs.highlightElement(block);
+        const pre = block.parentElement;
+        if (!pre.querySelector('.copy-btn')) {
+          const btn = document.createElement('button');
+          btn.className = 'copy-btn';
+          btn.textContent = '📋';
+          btn.onclick = () => {
+            navigator.clipboard.writeText(block.textContent);
+            btn.textContent = '✅';
+            btn.classList.add('copied');
+            btn.closest('.message')?.classList.add('glow');
+            setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1500);
+          };
+          pre.appendChild(btn);
+        }
+      });
+      // Jadvallarni chiroyli qilish
+      enhanceTables(bubble);
+      enhanceCallouts(bubble);
+      enhanceImages(bubble);
+      enhanceFiles(bubble);
+      enhanceTimelines(bubble);
+      enhanceMermaid(bubble);
+      enhanceJSON(bubble);
+      enhanceCodeBlocks(bubble);
+      enhanceTaskLists(bubble);
+      enhanceMath(bubble);
+      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    }
+
+    // Xabarni saqlash
+    const modelParts = [];
+    if (fullText) modelParts.push({ text: fullText });
+    const modelMsg = {
+      conversationId: convId,
+      role: 'model',
+      parts: modelParts,
+      thinking: thinkingText || null,
+      timestamp: new Date().toISOString()
+    };
+    await dbPut('messages', modelMsg);
+
+    // Auto-title (agar birinchi xabar bo'lsa)
+    const conv = state.conversations.find(c => c.id === convId);
+    if (conv && (conv.title === 'Yangi chat' || conv.title === conv.title?.slice(0, 50) + '...' || conv.title === text.slice(0, 50) + (text.length > 50 ? '...' : ''))) {
+      try {
+        await autoTitle(convId, text);
+      } catch (e) { /* silent */ }
+    }
+
+    // Conversation ni yangilash
+    if (conv) {
+      conv.updatedAt = new Date().toISOString();
+      await dbPut('conversations', conv);
+      renderConversationList();
+    }
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      showToast('⏹ To\'xtatildi', 'info');
+    } else {
+      const loadingEl = document.getElementById('loading-msg');
+      if (loadingEl) loadingEl.remove();
+      const errMsg = err.message.slice(0, 200);
+      showToast(`❌ ${errMsg}`, 'error');
+      // CORS/file:// xatoligini aniqlash
+      if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError') || errMsg.includes('Network') || errMsg.includes('CORS')) {
+        setTimeout(() => showToast('💡 Faylni server orqali oching: python3 -m http.server 8080', 'info'), 2000);
+      }
+    }
+  } finally {
+    state.isStreaming = false;
+    document.getElementById('send-btn').style.display = 'flex';
+    document.getElementById('stop-btn').style.display = 'none';
+    const loadingEl = document.getElementById('loading-msg');
+    if (loadingEl) loadingEl.remove();
+  }
+}
+
+function stopGeneration() {
+  if (state.abortController) {
+    state.abortController.abort();
+    state.isStreaming = false;
+    document.getElementById('send-btn').style.display = 'flex';
+    document.getElementById('stop-btn').style.display = 'none';
+  }
+}
+
+function getSystemPromptForConv(convId) {
+  const conv = state.conversations.find(c => c.id === convId);
+  if (conv && conv.systemPrompt) return conv.systemPrompt;
+  return getSettings().systemPrompt || '';
+}
+
+async function getHistory(convId) {
+  const msgs = await dbGetAllByIndex('messages', 'conversationId', convId);
+  const history = [];
+  for (const m of msgs) {
+    if (m.role === 'user' || m.role === 'model') {
+      history.push({ role: m.role, parts: m.parts });
+    }
+  }
+  return history;
+}
+
+async function autoTitle(convId, firstMessage) {
+  const settings = getSettings();
+  if (!settings.apiKey) return;
+  const model = settings.model.startsWith('models/') ? settings.model : `models/${settings.model}`;
+
+  const res = await fetch(`${API_BASE}/${model}:generateContent?key=${settings.apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: `Create a very short title (max 5 words) for a chat that starts with: "${firstMessage}". Return ONLY the title, no quotes.` }] }],
+      generationConfig: { maxOutputTokens: 20, temperature: 0.3 }
+    })
+  });
+  if (!res.ok) return;
+  const data = await res.json();
+  const title = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  if (title && title.length < 80) {
+    const conv = state.conversations.find(c => c.id === convId);
+    if (conv) {
+      conv.title = title;
+      await dbPut('conversations', conv);
+      document.getElementById('conv-title').textContent = title;
+      renderConversationList();
+    }
+  }
+}
+
+// ========================================================================
+//  CONVERSATION LIST RENDER
+// ========================================================================
+function renderConversationList() {
+  const container = document.getElementById('conv-list');
+  const search = document.getElementById('search-input').value.toLowerCase();
+  container.innerHTML = '';
+
+  let list = [...state.conversations];
+  if (search) {
+    list = list.filter(c => c.title?.toLowerCase().includes(search));
+  }
+  list.sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return (b.updatedAt || 0) - (a.updatedAt || 0);
+  });
+
+  list.forEach(c => {
+    const div = document.createElement('div');
+    div.className = `conv-item${c.id === state.currentConvId ? ' active' : ''}`;
+    div.innerHTML = `
+      <span class="conv-pin">${c.pinned ? '📌' : '💬'}</span>
+      <span class="conv-title">${c.title || 'Chat'}</span>
+      <button class="conv-del" onclick="event.stopPropagation();deleteConversation(${c.id})" title="O'chirish">✕</button>
+    `;
+    div.onclick = () => selectConversation(c.id);
+    container.appendChild(div);
+  });
+}
+
+// ========================================================================
+//  UI HELPERS
+// ========================================================================
+function updateModelBadge() {
+  const s = getSettings();
+  const badge = document.getElementById('model-badge');
+  if (s.mode === 'local') {
+    const short = s.localModel ? s.localModel.replace(/-q4f16_1-MLC$/, '') : 'Lokal';
+    badge.textContent = '🖥 ' + short;
+  } else if (s.mode === 'ollama') {
+    const short = s.ollamaModel || 'Ollama';
+    badge.textContent = '💻 ' + short;
+  } else if (s && s.model) {
+    const short = s.model.replace('models/', '');
+    badge.textContent = short;
+  } else {
+    badge.textContent = '—';
+  }
+}
+
+function updatePlaceholder() {
+  const s = getSettings();
+  const input = document.getElementById('chat-input');
+  input.placeholder = s.userPlaceholder || 'Xabar yozish...';
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('hidden');
+}
+
+function openSettings() {
+  settingsToForm();
+  document.getElementById('settings-overlay').classList.add('open');
+  // API key bor bo'lsa, check qil
+  const key = document.getElementById('settings-apikey').value.trim();
+  if (key && document.getElementById('settings-model').options.length <= 1) {
+    checkApiKey();
+  }
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+function createTypingDots() {
+  return '<span class="typing-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>';
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  document.getElementById('theme-btn').textContent = next === 'dark' ? '🌙' : '☀️';
+}
+
+function toggleThemeUI() {
+  toggleTheme();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+}
+
+function handleKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ========================================================================
+//  FILE HANDLING
+// ========================================================================
+let pendingFiles = [];
+
+function handleFiles(files) {
+  for (const f of files) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result.split(',')[1];
+      pendingFiles.push({ name: f.name, type: f.type, base64 });
+      updateFileBtn();
+      showToast(`📎 ${f.name} yuklandi`, 'info');
+    };
+    reader.readAsDataURL(f);
+  }
+}
+
+function updateFileBtn() {
+  const btn = document.querySelector('.input-actions button:first-child');
+  if (pendingFiles.length > 0) {
+    btn.textContent = `📎${pendingFiles.length}`;
+  } else {
+    btn.textContent = '📎';
+  }
+}
+
+// ========================================================================
+//  STT (Speech-to-Text)
+// ========================================================================
+let sttRecognition = null;
+let sttActive = false;
+let sttPendingSwitchModel = null; // model name kutayotgan
+let sttLevelInterval = null;
+
+// ========================================================================
+//  LOCAL ENGINE (WebLLM)
+// ========================================================================
+let localEngine = null;
+let localEngineLoading = false;
+let localEngineLoaded = false;
+let localEngineAbort = null; // AbortController for download
+
+function checkSttSupport() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('mic-btn');
+  if (!SpeechRecognition || !window.isSecureContext) {
+    btn.classList.add('unsupported');
+    if (!SpeechRecognition) {
+      btn.title = 'Brauzer ovozli kiritishni qo\'llab-quvvatlamaydi (Chrome yoki Edge kerak)';
+    } else {
+      btn.title = 'Ovozli kiritish uchun HTTPS yoki localhost talab qilinadi';
+    }
+    return false;
+  }
+  btn.classList.remove('unsupported');
+  btn.title = 'Ovozli kiritish (STT)';
+  return true;
+}
+
+function isAudioModel(model) {
+  // Gemma modellari audio kiritishni qo'llab-quvvatlamaydi
+  if (!model) return false;
+  const name = model.toLowerCase();
+  if (name.includes('gemma')) return false;
+  // Gemini, learnlm va boshqalar audio qo'llab-quvvatlaydi
+  return true;
+}
+
+function getAudioModels() {
+  const select = document.getElementById('settings-model');
+  const audioModels = [];
+  for (const opt of select.options) {
+    if (opt.value && !opt.value.toLowerCase().includes('gemma')) {
+      audioModels.push({ value: opt.value, label: opt.textContent });
+    }
+  }
+  return audioModels;
+}
+
+function startSpeechToText() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('❌ Brauzer ovozli kiritishni qo\'llab-quvvatlamaydi. Chrome yoki Edge dan foydalaning.', 'error');
+    return;
+  }
+  if (!window.isSecureContext) {
+    showToast('❌ Ovozli kiritish faqat HTTPS yoki localhost da ishlaydi. http://localhost:8080 dan oching', 'error');
+    return;
+  }
+
+  // Agar hozir yozish davom etayotgan bo'lsa, to'xtatish
+  if (sttActive) {
+    stopSpeechToText();
+    return;
+  }
+
+  // Joriy modelni tekshirish
+  const settings = getSettings();
+  const currentModel = settings.model || '';
+
+  if (!isAudioModel(currentModel) && currentModel) {
+    // Audio qo'llab-quvvatlamaydigan model (masalan Gemma) → dialog ko'rsatish
+    showSttModelDialog(currentModel);
+    return;
+  }
+
+  // Audio model bor-yo'qligini tekshirish
+  const audioModels = getAudioModels();
+  if (audioModels.length === 0) {
+    showToast('⚠️ Avval sozlamalarda API kalitni tekshiring va model yuklang', 'error');
+    openSettings();
+    return;
+  }
+
+  // Agar joriy model audio qo'llab-quvvatlasa, to'g'ridan-to'g'ri boshlash
+  doStartStt();
+}
+
+function showSttModelDialog(currentModel) {
+  const overlay = document.getElementById('stt-dialog');
+  const select = document.getElementById('stt-model-select');
+  const msg = document.getElementById('stt-dialog-msg');
+  
+  const audioModels = getAudioModels();
+  
+  select.innerHTML = '';
+  audioModels.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.value;
+    opt.textContent = m.label;
+    select.appendChild(opt);
+  });
+
+  const modelName = currentModel.replace('models/', '');
+  const curLang = getSettings().sttLang || 'uz-UZ';
+  msg.innerHTML = `"${modelName}" modeli <strong>audio kiritishni</strong> qo'llab-quvvatlamaydi. 
+  Ovozli kiritish uchun quyidagi modellardan birini tanlang yoki joriy model bilan davom eting.
+  <br><br>🎤 STT tili: <strong>${curLang}</strong> — <a href="#" onclick="closeSttDialog();openSettings()" style="color:var(--accent)">Sozlamalarda o'zgartirish</a>`;
+
+  sttPendingSwitchModel = currentModel;
+  overlay.classList.add('open');
+}
+
+function closeSttDialog() {
+  document.getElementById('stt-dialog').classList.remove('open');
+  sttPendingSwitchModel = null;
+}
+
+function startSttWithCurrent() {
+  closeSttDialog();
+  doStartStt();
+}
+
+function startSttWithSelected() {
+  const select = document.getElementById('stt-model-select');
+  const newModel = select.value;
+  if (!newModel) {
+    showToast('⚠️ Model tanlanmadi', 'error');
+    return;
+  }
+  closeSttDialog();
+
+  // Modelni vaqtinchalik almashtirish
+  const settings = getSettings();
+  const prevModel = settings.model;
+  settings.model = newModel;
+  state.settings = { ...settings, id: 'main' };
+  dbPut('settings', state.settings).catch(() => {});
+  updateModelBadge();
+  showToast(`✅ Model "${newModel.replace('models/', '')}" ga o'tildi`, 'success');
+
+  doStartStt();
+}
+
+function doStartStt() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return;
+
+  // Tanlangan tilni settings dan olish
+  const settings = getSettings();
+  const selectedLang = settings.sttLang || 'uz-UZ';
+
+  // Fallback tillar (agar tanlangan til ishlamasa)
+  const fallbackQueue = [
+    selectedLang,
+    ...(['uz-UZ', 'ru-RU', 'en-US', 'tr-TR', ''].filter(l => l !== selectedLang))
+  ];
+  let fallbackIndex = 0;
+
+  function tryStartWithLang(lang) {
+    if (lang === undefined || lang === null) {
+      showToast('❌ Hech qanday til ishlamadi. Brauzeringiz STT ni qo\'llab-quvvatlamaydi.', 'error');
+      return;
+    }
+    try {
+      if (sttRecognition) {
+        try { sttRecognition.stop(); } catch(e) {}
+        sttRecognition = null;
+      }
+      sttRecognition = new SpeechRecognition();
+      sttRecognition.lang = lang;
+      sttRecognition.continuous = true;
+      sttRecognition.interimResults = true;
+      sttRecognition.maxAlternatives = 1;
+
+      const micBtn = document.getElementById('mic-btn');
+      const recIndicator = document.getElementById('rec-indicator');
+      const input = document.getElementById('chat-input');
+
+      sttActive = true;
+      micBtn.classList.add('recording');
+      micBtn.textContent = '🔴';
+      recIndicator.classList.add('active');
+      if (lang) {
+        input.placeholder = `Gapingizni yozing... (${lang})`;
+      } else {
+        input.placeholder = 'Gapingizni yozing...';
+      }
+
+      let finalText = '';
+      let sttRestartCount = 0;
+
+      sttRecognition.onaudiostart = () => {
+        if (sttLevelInterval) clearInterval(sttLevelInterval);
+        sttLevelInterval = setInterval(() => {
+          const bar = document.getElementById('rec-bar');
+          if (bar) {
+            bar.style.width = (20 + Math.random() * 60) + '%';
+          }
+        }, 200);
+      };
+
+      sttRecognition.onaudioend = () => {
+        if (sttLevelInterval) {
+          clearInterval(sttLevelInterval);
+          sttLevelInterval = null;
+        }
+      };
+
+      sttRecognition.onresult = (event) => {
+        sttRestartCount = 0;
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalText += transcript + ' ';
+            input.value = finalText;
+          } else {
+            interim = transcript;
+            input.value = finalText + interim;
+          }
+        }
+        autoResize(input);
+      };
+
+      sttRecognition.onerror = (event) => {
+        if (event.error === 'no-speech') return;
+        if (event.error === 'aborted') return;
+        if (event.error === 'not-allowed') {
+          showToast('❌ Mikrofonga ruxsat berilmagan. Brauzer sozlamalarida ruxsat bering.', 'error');
+          stopSpeechToText();
+          return;
+        }
+        if (event.error === 'language-not-supported' || event.error === 'service-not-allowed') {
+          fallbackIndex++;
+          const nextLang = fallbackQueue[fallbackIndex];
+          const langName = nextLang || 'avtomatik';
+          showToast(`⚠️ "${lang}" tili qo\'llab-quvvatlanmadi. "${langName}" sinab ko\'rilmoqda...`, 'warning');
+          tryStartWithLang(nextLang);
+          return;
+        }
+        showToast(`❌ STT: ${event.error}`, 'error');
+        stopSpeechToText();
+      };
+
+      sttRecognition.onend = () => {
+        if (sttActive) {
+          sttRestartCount++;
+          if (sttRestartCount > 10) {
+            showToast('⚠️ STT 10 marta qayta ishga tushdi. To\'xtatildi.', 'warning');
+            stopSpeechToText();
+            return;
+          }
+          try { sttRecognition.start(); } catch(e) {
+            setTimeout(() => stopSpeechToText(), 100);
+          }
+        }
+      };
+
+      sttRecognition.start();
+      const langDisplay = lang || 'Avtomatik';
+      showToast(`🎤 Gapiring... (til: ${langDisplay})`, 'info');
+    } catch (e) {
+      const msg = e.message || '';
+      if (msg.includes('not-allowed') || msg.includes('permission')) {
+        showToast('❌ Mikrofonga ruxsat berilmagan.', 'error');
+      } else if (msg.includes('secure')) {
+        showToast('❌ Ovozli kiritish faqat HTTPS yoki localhost da ishlaydi.', 'error');
+      } else {
+        fallbackIndex++;
+        const nextLang = fallbackQueue[fallbackIndex];
+        if (nextLang !== undefined) {
+          showToast(`⚠️ "${lang}" xatolik. Keyingi til sinab ko\'rilmoqda...`, 'warning');
+          tryStartWithLang(nextLang);
+        } else {
+          showToast(`❌ STT xatolik: ${msg}`, 'error');
+        }
+      }
+      sttActive = false;
+      if (sttLevelInterval) { clearInterval(sttLevelInterval); sttLevelInterval = null; }
+      document.getElementById('mic-btn').classList.remove('recording');
+      document.getElementById('mic-btn').textContent = '🎤';
+      document.getElementById('rec-indicator').classList.remove('active');
+    }
+  }
+
+  tryStartWithLang(fallbackQueue[0]);
+}
+
+function stopSpeechToText() {
+  if (sttRecognition) {
+    try { sttRecognition.stop(); } catch(e) {}
+    sttRecognition = null;
+  }
+  sttActive = false;
+  sttPendingSwitchModel = null;
+
+  const micBtn = document.getElementById('mic-btn');
+  const recIndicator = document.getElementById('rec-indicator');
+  const input = document.getElementById('chat-input');
+
+  micBtn.classList.remove('recording');
+  micBtn.textContent = '🎤';
+  recIndicator.classList.remove('active');
+  updatePlaceholder();
+
+  // Agar matn bo'lsa va bo'sh bo'lmasa, avtomatik yuborish
+  if (input.value.trim()) {
+    sendMessage();
+  }
+}
+
+// ========================================================================
+//  LOCAL ENGINE (WebLLM) — funksiyalar
+// ========================================================================
+
+async function onModeChange() {
+  const mode = document.getElementById('settings-mode').value;
+  const localGroup = document.getElementById('local-model-group');
+  const ollamaGroup = document.getElementById('ollama-group');
+  const localStatusDiv = document.getElementById('local-model-status');
+  const webgpuWarning = document.getElementById('webgpu-warning');
+
+  // Barcha guruhlarni yashirish
+  localGroup.style.display = 'none';
+  ollamaGroup.style.display = 'none';
+
+  if (mode === 'ollama') {
+    ollamaGroup.style.display = 'block';
+  } else if (mode === 'local') {
+    localGroup.style.display = 'block';
+    // WebGPU tekshirish
+    if (!navigator.gpu) {
+      webgpuWarning.textContent = '⚠️ Brauzeringiz WebGPU ni qo\'llab-quvvatlamaydi. Chrome 113+ yoki Edge 113+ kerak. Online rejimdan foydalaning.';
+      webgpuWarning.classList.add('show');
+      document.getElementById('download-model-btn').disabled = true;
+    } else {
+      // shader-f16 tekshirish
+      const adapter = await navigator.gpu.requestAdapter();
+      if (adapter) {
+        const f16 = await adapter.features.has('shader-f16');
+        if (!f16) {
+          webgpuWarning.textContent = '⚠️ GPU shader-f16 ni qo\'llab-quvvatlamaydi. Model ishlamasligi mumkin.';
+          webgpuWarning.classList.add('show');
+        } else {
+          webgpuWarning.classList.remove('show');
+          webgpuWarning.textContent = '';
+        }
+        document.getElementById('download-model-btn').disabled = false;
+      } else {
+        webgpuWarning.textContent = '⚠️ WebGPU adapter topilmadi. Brauzeringizni yangilang.';
+        webgpuWarning.classList.add('show');
+        document.getElementById('download-model-btn').disabled = true;
+      }
+    }
+    // Status yangilash
+    updateLocalModelStatus();
+  } // online rejimda hech narsa ko'rsatilmaydi
+}
+
+async function checkWebGPU() {
+  // WebGPU mavjudligini tekshirish
+  if (!navigator.gpu) return { supported: false, reason: 'navigator.gpu mavjud emas' };
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) return { supported: false, reason: 'WebGPU adapter topilmadi' };
+    const f16 = await adapter.features.has('shader-f16');
+    const info = {
+      supported: true,
+      adapter: adapter.name || 'Noma\'lum',
+      vendor: adapter.vendor || 'Noma\'lum',
+      f16: f16
+    };
+    adapterInfo = info;
+    return info;
+  } catch (e) {
+    return { supported: false, reason: e.message };
+  }
+}
+
+let adapterInfo = null;
+
+function updateLocalModelStatus() {
+  const statusDiv = document.getElementById('local-model-status');
+  const btn = document.getElementById('download-model-btn');
+  if (localEngineLoaded) {
+    statusDiv.innerHTML = '<span class="status-loaded">✅ Model yuklangan va tayyor</span>';
+    btn.textContent = '🔄 Modelni qayta yuklash';
+    btn.disabled = false;
+  } else if (localEngineLoading) {
+    statusDiv.innerHTML = '<span class="status-loading">⏳ Yuklanmoqda...</span>';
+    btn.textContent = '⏳ Yuklanmoqda...';
+    btn.disabled = true;
+  } else {
+    const modelName = document.getElementById('settings-local-model').value.replace(/-q4f16_1-MLC$/, '');
+    statusDiv.innerHTML = `<span class="status-waiting">⏳ Model yuklanmagan. "${modelName}" ni yuklab olish uchun tugmani bosing.</span>`;
+    btn.textContent = '📥 Modelni yuklab olish';
+    btn.disabled = !navigator.gpu;
+  }
+}
+
+async function downloadLocalModel() {
+  if (localEngineLoading) {
+    showToast('⏳ Yuklash davom etmoqda...', 'warning');
+    return;
+  }
+  if (!navigator.gpu) {
+    showToast('❌ WebGPU mavjud emas. Chrome 113+ yoki Edge 113+ dan foydalaning.', 'error');
+    return;
+  }
+
+  const modelSelect = document.getElementById('settings-local-model');
+  const modelId = modelSelect.value;
+  const progressDiv = document.getElementById('download-progress');
+  const progressFill = document.getElementById('progress-fill');
+  const progressText = document.getElementById('progress-text');
+  const progressSpeed = document.getElementById('progress-speed');
+  const statusDiv = document.getElementById('local-model-status');
+  const btn = document.getElementById('download-model-btn');
+
+  localEngineLoading = true;
+  localEngineLoaded = false;
+  progressDiv.style.display = 'block';
+  progressFill.style.width = '0%';
+  progressText.textContent = '0%';
+  progressSpeed.textContent = '';
+  statusDiv.innerHTML = '<span class="status-loading">⏳ WebLLM yuklanmoqda...</span>';
+  btn.textContent = '⏳ Yuklanmoqda...';
+  btn.disabled = true;
+
+  try {
+    // WebLLM ni CDN dan yuklash
+    statusDiv.innerHTML = '<span class="status-loading">⏳ WebLLM kutubxonasi yuklanmoqda...</span>';
+    progressText.textContent = 'Kutubxona yuklanmoqda...';
+
+    // WebLLM ni CDN dan yuklash (esm.sh yoki jsdelivr)
+    const WebLLMModule = await import('https://esm.sh/@mlc-ai/web-llm@0.2.83')
+      .catch(() => import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.83/+esm'));
+    const { CreateMLCEngine } = WebLLMModule;
+
+    statusDiv.innerHTML = `<span class="status-loading">⏳ "${modelId}" yuklanmoqda (birinchi marta ~70-90s)...</span>`;
+    progressText.textContent = 'Model yuklanmoqda...';
+
+    // Modelni yuklash + progress
+    localEngine = await CreateMLCEngine(modelId, {
+      initProgressCallback: (progress) => {
+        const pct = Math.round(progress.progress * 100);
+        progressFill.style.width = pct + '%';
+        progressText.textContent = pct + '%';
+        if (progress.text) {
+          progressSpeed.textContent = progress.text;
+        }
+      }
+    });
+
+    localEngineLoaded = true;
+    localEngineLoading = false;
+    progressFill.style.width = '100%';
+    progressText.textContent = '100%';
+    progressSpeed.textContent = '✅ Tayyor';
+    statusDiv.innerHTML = '<span class="status-loaded">✅ Model yuklangan va tayyor</span>';
+    btn.textContent = '🔄 Modelni qayta yuklash';
+    btn.disabled = false;
+    showToast(`✅ "${modelId}" muvaffaqiyatli yuklandi!`, 'success');
+
+    // Model nomini saqlash
+    const s = getSettings();
+    s.localModel = modelId;
+    state.settings = { ...s, id: 'main' };
+    await dbPut('settings', state.settings);
+    updateModelBadge();
+
+  } catch (err) {
+    localEngineLoading = false;
+    localEngineLoaded = false;
+    localEngine = null;
+    progressDiv.style.display = 'none';
+    statusDiv.innerHTML = `<span class="status-error">❌ Xatolik: ${err.message || err}</span>`;
+    btn.textContent = '📥 Qayta urinish';
+    btn.disabled = !navigator.gpu;
+    showToast(`❌ Model yuklanmadi: ${err.message}`, 'error');
+    console.error('WebLLM yuklash xatoligi:', err);
+  }
+}
+
+async function sendMessageLocal(text) {
+  if (!localEngine || !localEngineLoaded) {
+    showToast('❌ Lokal model tayyor emas', 'error');
+    return;
+  }
+  if (!text.trim()) return;
+
+  const settings = getSettings();
+  const convId = state.currentConvId;
+
+  // Agar conversation bo'lmasa, yangi yaratish
+  let localConvId = convId;
+  if (!localConvId) {
+    const conv = {
+      title: text.slice(0, 50) + (text.length > 50 ? '...' : ''),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      model: 'local:' + settings.localModel,
+      systemPrompt: settings.systemPrompt,
+      pinned: false
+    };
+    const tx = db.transaction('conversations', 'readwrite');
+    const req = tx.objectStore('conversations').add(conv);
+    await new Promise(resolve => tx.oncomplete = resolve);
+    localConvId = req.result;
+    state.currentConvId = localConvId;
+    state.conversations.unshift({ ...conv, id: localConvId });
+    renderConversationList();
+  }
+
+  // User message
+  const userParts = [{ text }];
+  const userMsg = { conversationId: localConvId, role: 'user', parts: userParts, timestamp: new Date().toISOString() };
+  await dbPut('messages', userMsg);
+  renderMessage('user', userParts, null);
+  document.getElementById('chat-input').value = '';
+  document.getElementById('chat-input').style.height = 'auto';
+
+  // Loading indicator
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'message assistant';
+  loadingDiv.id = 'loading-msg';
+  loadingDiv.innerHTML = `<div class="avatar">✦</div><div class="bubble">${createTypingDots()}</div>`;
+  document.getElementById('messages').appendChild(loadingDiv);
+
+  // History
+  const msgs = await dbGetAllByIndex('messages', 'conversationId', localConvId);
+  const messages = [];
+  if (settings.systemPrompt) {
+    messages.push({ role: 'system', content: settings.systemPrompt });
+  }
+  for (const m of msgs) {
+    if (m.role === 'user') {
+      const parts = m.parts || [];
+      const content = parts.map(p => p.text || '').filter(Boolean).join(' ');
+      if (content) messages.push({ role: 'user', content });
+    } else if (m.role === 'model') {
+      const parts = m.parts || [];
+      const content = parts.map(p => p.text || '').filter(Boolean).join(' ');
+      if (content) messages.push({ role: 'assistant', content });
+    }
+  }
+
+  state.abortController = new AbortController();
+  state.isStreaming = true;
+  document.getElementById('send-btn').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'flex';
+
+  try {
+    // Loading ni o'chirish
+    const loadingEl = document.getElementById('loading-msg');
+    if (loadingEl) loadingEl.remove();
+
+    // Assistant message container
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message assistant';
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'avatar';
+    avatarDiv.textContent = '✦';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    msgDiv.append(avatarDiv, bubble);
+    document.getElementById('messages').appendChild(msgDiv);
+
+    let fullText = '';
+
+    // WebLLM streaming
+    const asyncChunk = await localEngine.chat.completions.create({
+      messages: messages,
+      stream: true,
+      temperature: settings.temperature,
+      max_tokens: settings.maxTokens,
+    });
+
+    for await (const chunk of asyncChunk) {
+      if (state.abortController.signal.aborted) break;
+      const content = chunk.choices?.[0]?.delta?.content || '';
+      if (content) {
+        fullText += content;
+        bubble.innerHTML = marked.parse(fullText, { breaks: true });
+        bubble.querySelectorAll('pre code').forEach(block => {
+          hljs.highlightElement(block);
+          const pre = block.parentElement;
+          if (!pre.querySelector('.copy-btn')) {
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.textContent = '📋';
+            btn.onclick = () => {
+              navigator.clipboard.writeText(block.textContent);
+              btn.textContent = '✅';
+              btn.classList.add('copied');
+              btn.closest('.message')?.classList.add('glow');
+              setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1500);
+            };
+            pre.appendChild(btn);
+          }
+        });
+        enhanceTables(bubble);
+        enhanceCallouts(bubble);
+        enhanceImages(bubble);
+        enhanceFiles(bubble);
+        enhanceTimelines(bubble);
+        enhanceMermaid(bubble);
+        enhanceJSON(bubble);
+        enhanceCodeBlocks(bubble);
+        enhanceTaskLists(bubble);
+        enhanceMath(bubble);
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+      }
+    }
+
+    // Xabarni saqlash
+    if (fullText) {
+      const modelParts = [{ text: fullText }];
+      const modelMsg = {
+        conversationId: localConvId,
+        role: 'model',
+        parts: modelParts,
+        thinking: null,
+        timestamp: new Date().toISOString()
+      };
+      await dbPut('messages', modelMsg);
+
+      // Auto-title
+      const conv = state.conversations.find(c => c.id === localConvId);
+      if (conv && (conv.title === text.slice(0, 50) + (text.length > 50 ? '...' : ''))) {
+        try {
+          // Gemini bilan titrlash (agar online bo'lsa)
+          const onSettings = getSettings();
+          if (onSettings.apiKey && onSettings.model) {
+            await autoTitle(localConvId, text);
+          } else {
+            conv.title = text.slice(0, 40) + (text.length > 40 ? '...' : '');
+            await dbPut('conversations', conv);
+            document.getElementById('conv-title').textContent = conv.title;
+            renderConversationList();
+          }
+        } catch (e) { /* silent */ }
+      }
+      if (conv) {
+        conv.updatedAt = new Date().toISOString();
+        await dbPut('conversations', conv);
+        renderConversationList();
+      }
+    }
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      showToast('⏹ To\'xtatildi', 'info');
+    } else {
+      const loadingEl = document.getElementById('loading-msg');
+      if (loadingEl) loadingEl.remove();
+      showToast(`❌ Lokal model xatoligi: ${err.message.slice(0, 200)}`, 'error');
+    }
+  } finally {
+    state.isStreaming = false;
+    document.getElementById('send-btn').style.display = 'flex';
+    document.getElementById('stop-btn').style.display = 'none';
+    const loadingEl = document.getElementById('loading-msg');
+    if (loadingEl) loadingEl.remove();
+  }
+}
+
+// ========================================================================
+//  OLLAMA ENGINE (lokal server)
+// ========================================================================
+
+async function sendMessageOllama(text) {
+  if (!text.trim()) return;
+
+  const settings = getSettings();
+  const baseUrl = settings.ollamaUrl.replace(/\/+$/, '');
+  const model = settings.ollamaModel;
+  const convId = state.currentConvId;
+
+  // Conversation
+  let ollamaConvId = convId;
+  if (!ollamaConvId) {
+    const conv = {
+      title: text.slice(0, 50) + (text.length > 50 ? '...' : ''),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      model: 'ollama:' + model,
+      systemPrompt: settings.systemPrompt,
+      pinned: false
+    };
+    const tx = db.transaction('conversations', 'readwrite');
+    const req = tx.objectStore('conversations').add(conv);
+    await new Promise(resolve => tx.oncomplete = resolve);
+    ollamaConvId = req.result;
+    state.currentConvId = ollamaConvId;
+    state.conversations.unshift({ ...conv, id: ollamaConvId });
+    renderConversationList();
+  }
+
+  // User message
+  const userParts = [{ text }];
+  const userMsg = { conversationId: ollamaConvId, role: 'user', parts: userParts, timestamp: new Date().toISOString() };
+  await dbPut('messages', userMsg);
+  renderMessage('user', userParts, null);
+  document.getElementById('chat-input').value = '';
+  document.getElementById('chat-input').style.height = 'auto';
+
+  // Loading
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'message assistant';
+  loadingDiv.id = 'loading-msg';
+  loadingDiv.innerHTML = `<div class="avatar">✦</div><div class="bubble">${createTypingDots()}</div>`;
+  document.getElementById('messages').appendChild(loadingDiv);
+
+  // History
+  const msgs = await dbGetAllByIndex('messages', 'conversationId', ollamaConvId);
+  const messages = [];
+  if (settings.systemPrompt) {
+    messages.push({ role: 'system', content: settings.systemPrompt });
+  }
+  for (const m of msgs) {
+    if (m.role === 'user') {
+      const parts = m.parts || [];
+      const content = parts.map(p => p.text || '').filter(Boolean).join(' ');
+      if (content) messages.push({ role: 'user', content });
+    } else if (m.role === 'model') {
+      const parts = m.parts || [];
+      const content = parts.map(p => p.text || '').filter(Boolean).join(' ');
+      if (content) messages.push({ role: 'assistant', content });
+    }
+  }
+
+  state.abortController = new AbortController();
+  state.isStreaming = true;
+  document.getElementById('send-btn').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'flex';
+
+  try {
+    const loadingEl = document.getElementById('loading-msg');
+    if (loadingEl) loadingEl.remove();
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message assistant';
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'avatar';
+    avatarDiv.textContent = '✦';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    msgDiv.append(avatarDiv, bubble);
+    document.getElementById('messages').appendChild(msgDiv);
+
+    let fullText = '';
+
+    const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: model,
+        messages: messages,
+        stream: true,
+        temperature: settings.temperature,
+        max_tokens: settings.maxTokens
+      }),
+      signal: state.abortController.signal
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Ollama HTTP ${res.status}: ${errText.slice(0, 200)}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr || jsonStr === '[DONE]') continue;
+          try {
+            const data = JSON.parse(jsonStr);
+            const content = data.choices?.[0]?.delta?.content || '';
+            if (content) {
+              fullText += content;
+              bubble.innerHTML = marked.parse(fullText, { breaks: true });
+              bubble.querySelectorAll('pre code').forEach(block => {
+                hljs.highlightElement(block);
+                const pre = block.parentElement;
+                if (!pre.querySelector('.copy-btn')) {
+                  const btn = document.createElement('button');
+                  btn.className = 'copy-btn';
+                  btn.textContent = '📋';
+                  btn.onclick = () => {
+                    navigator.clipboard.writeText(block.textContent);
+                    btn.textContent = '✅';
+                    btn.classList.add('copied');
+                    btn.closest('.message')?.classList.add('glow');
+                    setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1500);
+                  };
+                  pre.appendChild(btn);
+                }
+              });
+              enhanceTables(bubble);
+              enhanceCallouts(bubble);
+              enhanceImages(bubble);
+              enhanceFiles(bubble);
+              enhanceTimelines(bubble);
+              enhanceMermaid(bubble);
+              enhanceJSON(bubble);
+              enhanceCodeBlocks(bubble);
+              enhanceTaskLists(bubble);
+              enhanceMath(bubble);
+              document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+            }
+          } catch (e) { /* parse error */ }
+        }
+      }
+    }
+
+    // Saqlash
+    if (fullText) {
+      const modelParts = [{ text: fullText }];
+      const modelMsg = {
+        conversationId: ollamaConvId,
+        role: 'model',
+        parts: modelParts,
+        thinking: null,
+        timestamp: new Date().toISOString()
+      };
+      await dbPut('messages', modelMsg);
+
+      const conv = state.conversations.find(c => c.id === ollamaConvId);
+      if (conv && (conv.title === text.slice(0, 50) + (text.length > 50 ? '...' : ''))) {
+        conv.title = text.slice(0, 40) + (text.length > 40 ? '...' : '');
+        await dbPut('conversations', conv);
+        document.getElementById('conv-title').textContent = conv.title;
+        renderConversationList();
+      }
+      if (conv) {
+        conv.updatedAt = new Date().toISOString();
+        await dbPut('conversations', conv);
+        renderConversationList();
+      }
+    }
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      showToast('⏹ To\'xtatildi', 'info');
+    } else {
+      const loadingEl = document.getElementById('loading-msg');
+      if (loadingEl) loadingEl.remove();
+      let msg = err.message.slice(0, 200);
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        msg = 'Ollama serveriga ulanishmadi. Server ishlayotganiga ishonch hosil qiling: ' + settings.ollamaUrl;
+      }
+      showToast('❌ Ollama: ' + msg, 'error');
+    }
+  } finally {
+    state.isStreaming = false;
+    document.getElementById('send-btn').style.display = 'flex';
+    document.getElementById('stop-btn').style.display = 'none';
+    const loadingEl = document.getElementById('loading-msg');
+    if (loadingEl) loadingEl.remove();
+  }
+}
+
+// Ollama ulanishni tekshirish
+async function checkOllamaConnection() {
+  const statusDiv = document.getElementById('ollama-status');
+  const url = document.getElementById('settings-ollama-url').value.trim().replace(/\/+$/, '');
+  if (!url) {
+    statusDiv.className = 'api-status error';
+    statusDiv.innerHTML = '✗ Server URL ni kiriting';
+    return;
+  }
+
+  statusDiv.className = 'api-status loading';
+  statusDiv.innerHTML = '<span class="spinner"></span> Tekshirilmoqda...';
+
+  try {
+    const res = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const models = data.models || [];
+
+    const select = document.getElementById('settings-ollama-model');
+    select.innerHTML = '<option value="">— Modelni tanlang —</option>';
+
+    if (models.length === 0) {
+      statusDiv.className = 'api-status connected';
+      statusDiv.innerHTML = '✓ Ulanish muvaffaqiyatli, lekin modellar topilmadi. <code>ollama pull gemma4:e2b</code> buyrug\'ini bajaring.';
+      return;
+    }
+
+    models.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.name;
+      opt.textContent = `${m.name} (${(m.size / 1e9).toFixed(1)} GB)`;
+      select.appendChild(opt);
+    });
+
+    // Current model
+    const current = document.getElementById('settings-ollama-model').value;
+    if (current && [...select.options].some(o => o.value === current)) {
+      select.value = current;
+    }
+
+    statusDiv.className = 'api-status connected';
+    statusDiv.innerHTML = `✓ Ulanish muvaffaqiyatli (${models.length} ta model)`;
+    showToast(`✅ Ollama serveriga ulandi (${models.length} model)`, 'success');
+  } catch (err) {
+    let msg = err.message;
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('timed out') || msg.includes('Timeout')) {
+      msg = 'Serverga ulanishmadi. Ollama ishga tushirilganligini tekshiring: <code>ollama serve</code>';
+    }
+    statusDiv.className = 'api-status error';
+    statusDiv.innerHTML = '✗ ' + msg;
+  }
+}
+
+async function refreshOllamaModels() {
+  await checkOllamaConnection();
+}
+
+// ========================================================================
+//  INIT
+// ========================================================================
+async function init() {
+  try {
+    // Desktopda sidebar ko'rinib tursin, mobilda esa hidden (HTML default)
+    if (window.innerWidth >= 1024) {
+      document.getElementById('sidebar').classList.remove('hidden');
+    }
+    await openDB();
+    await loadSettings();
+    updatePlaceholder();
+    updateModelBadge();
+    await loadConversations();
+
+    // Agar settings bo'lmasa, settings ochish
+    if (!state.settings) {
+      setTimeout(() => openSettings(), 500);
+    }
+
+    // Agar API key bor bo'lsa, model list yuklash
+    const key = getSettings().apiKey;
+    if (key) {
+      try {
+        const models = await fetchModelsList(key);
+        const genModels = models.filter(m =>
+          m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
+        );
+        genModels.sort((a, b) => a.displayName?.localeCompare(b.displayName));
+        const select = document.getElementById('settings-model');
+        select.innerHTML = '';
+        genModels.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.name.startsWith('models/') ? m.name : 'models/' + m.name;
+          opt.textContent = m.displayName || m.name;
+          select.appendChild(opt);
+        });
+        const curModel = getSettings().model;
+        if (curModel && [...select.options].some(o => o.value === curModel)) {
+          select.value = curModel;
+        }
+        document.getElementById('api-status').className = 'api-status connected';
+        document.getElementById('api-status').innerHTML = `✓ Ulangan (${genModels.length} ta model)`;
+      } catch (e) {
+        // API key not work, ignore
+      }
+    }
+
+    // Theme btn
+    const theme = document.documentElement.getAttribute('data-theme');
+    document.getElementById('theme-btn').textContent = theme === 'dark' ? '🌙' : '☀️';
+
+    // STT qo'llab-quvvatlanishini tekshirish
+    checkSttSupport();
+    if (!window.isSecureContext) {
+      console.warn('STT: Xavfsiz kontekst emas (HTTP). Web Speech API ishlamaydi.');
+    }
+
+    // Lokal rejim tekshiruv
+    const initSettings = getSettings();
+    if (initSettings.mode === 'local') {
+      // WebGPU mavjudligini tekshirish
+      const gpuCheck = await checkWebGPU();
+      if (!gpuCheck.supported || !gpuCheck.f16) {
+        console.warn('Lokal rejim: WebGPU muammosi -', gpuCheck.reason || 'shader-f16 yo\'q');
+      }
+      // Oldin yuklangan model bormi?
+      if (localEngineLoaded) {
+        updateModelBadge();
+      }
+    }
+
+    // Oyna kattalashganda sidebar moslashuvi
+    window.addEventListener('resize', () => {
+      const sidebar = document.getElementById('sidebar');
+      if (window.innerWidth >= 1024 && sidebar.classList.contains('hidden')) {
+        sidebar.classList.remove('hidden');
+      }
+    });
+
+    loadConversations();
+  } catch (err) {
+    console.error('Init error:', err);
+    showToast('❌ Yuklashda xatolik', 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
